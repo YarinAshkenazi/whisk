@@ -1,8 +1,8 @@
 import { Platform } from 'react-native';
 
-// Physical device (Expo Go): uses LAN IP so the phone can reach your PC
+// Physical device (Expo Go): uses hostname so it works across different networks
 // Android emulator: 10.0.2.2 maps to host loopback
-const DEV_HOST = Platform.select({ android: '10.0.2.2', default: '192.168.200.32' });
+const DEV_HOST = Platform.select({ android: '10.0.2.2', default: 'YarinLaptop.local' });
 export const API_URL = __DEV__ ? `http://${DEV_HOST}:5000/api` : 'https://api.whisk.app/api';
 
 export const COLLECTION_STATUS = {
