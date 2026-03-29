@@ -1,0 +1,33 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# .NET
+**/bin/
+**/obj/
+**/out/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+# Secrets / local overrides (do not commit real secrets)
+**/appsettings.*.local.json
+**/secrets.json
+.env
+.env.local
+*.pfx
+
+# Node / Expo (also covered by mobile/.gitignore)
+**/node_modules/
+mobile/.expo/
+mobile/dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.idea/
+*.swp
