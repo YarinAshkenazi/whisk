@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavigationContainer, DarkTheme, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import * as Notifications from 'expo-notifications';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View, Platform } from 'react-native';
 import { colors } from '../theme';
 import { useAuthStore } from '../store/authStore';
 import { authApi } from '../api/auth';
+import { registerForPushNotifications } from '../utils/notifications';
 
 import SignInScreen from '../screens/auth/SignInScreen';
 import OnboardingScreen from '../screens/auth/OnboardingScreen';
@@ -118,10 +120,32 @@ export default function AppNavigator() {
   const { isAuthenticated, isLoading, initialize, token, setUser, logout } = useAuthStore();
   const [checkingProfile, setCheckingProfile] = useState(false);
   const [isOnboarded, setIsOnboarded] = useState(null);
+  const navigationRef = useRef(null);
+  const notificationResponseListener = useRef(null);
 
   useEffect(() => {
     initialize();
   }, []);
+
+  useEffect(() => {
+    notificationResponseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+      const data = response.notification.request.content.data;
+      if (data?.type === 'request_approved' && data?.whiskeyId && navigationRef.current) {
+        navigationRef.current.navigate('BottleDetail', { id: data.whiskeyId });
+      }
+    });
+    return () => {
+      if (notificationResponseListener.current) {
+        Notifications.removeNotificationSubscription(notificationResponseListener.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      registerForPushNotifications();
+    }
+  }, [isAuthenticated, token]);
 
   useEffect(() => {
     if (isAuthenticated && token) {
@@ -141,7 +165,7 @@ export default function AppNavigator() {
   if (isLoading || checkingProfile) return <LoadingScreen message="Loading Whisk..." />;
 
   return (
-    <NavigationContainer theme={navigationTheme}>
+    <NavigationContainer theme={navigationTheme} ref={navigationRef}>
       <Stack.Navigator screenOptions={screenOptions}>
         {!isAuthenticated ? (
           <Stack.Screen name="SignIn" component={SignInScreen} options={{ headerShown: false }} />

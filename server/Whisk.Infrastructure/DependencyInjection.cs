@@ -19,6 +19,7 @@ public static class DependencyInjection
         services.AddScoped<IWhiskDbContext>(provider => provider.GetRequiredService<WhiskDbContext>());
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IRecommendationService, RecommendationService>();
+        services.AddSingleton<IPushNotificationService, ExpoPushService>();
 
         return services;
     }

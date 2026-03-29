@@ -53,7 +53,16 @@ export default function AdminRequestsScreen({ navigation }) {
             </View>
           )}
           {item.status === 'Approved' && !item.approvedWhiskeyId && (
-            <Button title="Create Whiskey from Request" onPress={() => navigation.navigate('AdminEditWhiskey', { whiskey: null, prefill: { name: item.name, brand: item.brand } })} variant="secondary" style={{ marginTop: spacing.sm }} />
+            <Button title="Create Whiskey from Request" onPress={() => navigation.navigate('AdminEditWhiskey', { whiskey: null, prefill: { requestId: item.id, name: item.name, brand: item.brand, details: item.details } })} variant="secondary" style={{ marginTop: spacing.sm }} />
+          )}
+          {item.status === 'Pending' && (
+            <Button title="Approve & Create Whiskey" onPress={async () => {
+              try {
+                await adminApi.approveRequest(item.id);
+                qc.invalidateQueries({ queryKey: ['adminRequests'] });
+                navigation.navigate('AdminEditWhiskey', { whiskey: null, prefill: { requestId: item.id, name: item.name, brand: item.brand, details: item.details } });
+              } catch (e) { Alert.alert('Error', 'Failed to approve'); }
+            }} variant="secondary" style={{ marginTop: spacing.xs }} />
           )}
         </View>
       )}

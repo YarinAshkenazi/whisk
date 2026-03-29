@@ -14,6 +14,7 @@ public class User
     public bool IsOver18 { get; set; }
     public bool IsActive { get; set; } = true;
     public bool IsOnboardingComplete { get; set; }
+    public string? ExpoPushToken { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastLoginAt { get; set; }

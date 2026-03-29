@@ -11,13 +11,15 @@ import { getWhiskeyImageUrl } from '../../constants';
 
 export default function AdminEditWhiskeyScreen({ navigation, route }) {
   const existing = route.params?.whiskey;
+  const prefill = route.params?.prefill;
   const isEdit = !!existing;
   const { data: categories } = useAdminCategories();
   const qc = useQueryClient();
 
+  const source = existing || prefill || {};
   const [form, setForm] = useState({
-    name: existing?.name || '',
-    brand: existing?.brand || '',
+    name: source.name || '',
+    brand: source.brand || '',
     age: existing?.age?.toString() || '',
     country: existing?.country || '',
     region: existing?.region || '',
@@ -26,7 +28,7 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
     volumeML: existing?.volumeML?.toString() || '700',
     alcoholPercentage: existing?.alcoholPercentage?.toString() || '',
     imageUrl: existing?.imageUrl || '',
-    description: existing?.description || '',
+    description: existing?.description || prefill?.details || '',
     bodyProfile: existing?.bodyProfile?.toString() || '5',
     smokinessProfile: existing?.smokinessProfile?.toString() || '5',
     sweetnessProfile: existing?.sweetnessProfile?.toString() || '5',
@@ -102,6 +104,7 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
         alcoholProfile: form.alcoholProfile ? Number(form.alcoholProfile) : null,
         minMarketPriceIls: Number(form.minMarketPriceIls),
         maxMarketPriceIls: Number(form.maxMarketPriceIls),
+        requestId: prefill?.requestId || null,
       };
 
       if (isEdit) {
@@ -111,6 +114,7 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
       }
       qc.invalidateQueries({ queryKey: ['adminWhiskies'] });
       qc.invalidateQueries({ queryKey: ['whiskies'] });
+      if (prefill?.requestId) qc.invalidateQueries({ queryKey: ['adminRequests'] });
       navigation.goBack();
     } catch (e) {
       setUploading(false);

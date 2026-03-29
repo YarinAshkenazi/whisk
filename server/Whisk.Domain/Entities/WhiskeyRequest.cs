@@ -10,6 +10,7 @@ public class WhiskeyRequest
     public Enums.WhiskeyRequestStatus Status { get; set; } = Enums.WhiskeyRequestStatus.Pending;
     public string? AdminNotes { get; set; }
     public Guid? ApprovedWhiskeyId { get; set; }
+    public DateTime? NotificationSentAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

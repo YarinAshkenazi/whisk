@@ -84,7 +84,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("whiskies")]
-    public async Task<ActionResult<AdminWhiskeyDto>> CreateWhiskey([FromBody] CreateWhiskeyRequest request, [FromServices] IValidator<CreateWhiskeyRequest> validator)
+    public async Task<ActionResult<AdminWhiskeyDto>> CreateWhiskey([FromBody] CreateWhiskeyRequest request, [FromServices] IValidator<CreateWhiskeyRequest> validator, [FromServices] IPushNotificationService pushService)
     {
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid) return BadRequest(validation.Errors.Select(e => e.ErrorMessage));
@@ -103,7 +103,43 @@ public class AdminController : ControllerBase
         };
 
         _db.Whiskies.Add(whiskey);
-        await _db.SaveChangesAsync();
+
+        if (request.RequestId.HasValue)
+        {
+            var whiskeyRequest = await _db.WhiskeyRequests
+                .Include(r => r.User)
+                .FirstOrDefaultAsync(r => r.Id == request.RequestId.Value);
+
+            if (whiskeyRequest != null)
+            {
+                whiskeyRequest.ApprovedWhiskeyId = whiskey.Id;
+                whiskeyRequest.Status = WhiskeyRequestStatus.Approved;
+                whiskeyRequest.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await _db.SaveChangesAsync();
+
+            if (whiskeyRequest?.User != null
+                && !string.IsNullOrEmpty(whiskeyRequest.User.ExpoPushToken)
+                && whiskeyRequest.NotificationSentAt == null)
+            {
+                var sent = await pushService.SendAsync(
+                    whiskeyRequest.User.ExpoPushToken,
+                    "Your whiskey request was approved!",
+                    $"{whiskey.Name} by {whiskey.Brand} is now available in Whisk.",
+                    new { type = "request_approved", whiskeyId = whiskey.Id.ToString(), requestId = whiskeyRequest.Id.ToString() });
+
+                if (sent)
+                {
+                    whiskeyRequest.NotificationSentAt = DateTime.UtcNow;
+                    await _db.SaveChangesAsync();
+                }
+            }
+        }
+        else
+        {
+            await _db.SaveChangesAsync();
+        }
 
         return CreatedAtAction(nameof(GetWhiskies), null, new AdminWhiskeyDto(whiskey.Id, whiskey.Name, whiskey.Brand, whiskey.Age, whiskey.Country, whiskey.Region, whiskey.Distillery, whiskey.CategoryId, cat.Name, whiskey.VolumeML, whiskey.AlcoholPercentage, whiskey.ImageUrl, whiskey.Description, whiskey.BodyProfile, whiskey.SmokinessProfile, whiskey.SweetnessProfile, whiskey.AlcoholProfile, whiskey.MinMarketPriceIls, whiskey.MaxMarketPriceIls, whiskey.IsActive, whiskey.CreatedAt, whiskey.UpdatedAt));
     }

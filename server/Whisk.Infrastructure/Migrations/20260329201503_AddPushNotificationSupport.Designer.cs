@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Whisk.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Whisk.Infrastructure.Persistence;
 namespace Whisk.Infrastructure.Migrations
 {
     [DbContext(typeof(WhiskDbContext))]
-    partial class WhiskDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260329201503_AddPushNotificationSupport")]
+    partial class AddPushNotificationSupport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

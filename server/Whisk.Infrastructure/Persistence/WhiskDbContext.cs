@@ -33,6 +33,7 @@ public class WhiskDbContext : DbContext, IWhiskDbContext
             e.Property(u => u.AuthProviderUserId).IsRequired().HasMaxLength(256);
             e.Property(u => u.Role).HasConversion<string>().HasMaxLength(20).IsRequired();
             e.Property(u => u.AuthProvider).HasConversion<string>().HasMaxLength(20).IsRequired();
+            e.Property(u => u.ExpoPushToken).HasMaxLength(256);
             e.Property(u => u.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             e.Property(u => u.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
         });

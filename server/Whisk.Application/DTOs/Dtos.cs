@@ -42,7 +42,7 @@ public record CreateWhiskeyRequestDto(string Name, string Brand, string? Details
 public record AdminDashboardDto(int TotalUsers, int ActiveUsers, int TotalWhiskies, int TotalTastings, int TotalCollectionItems, int PendingRequests);
 public record AdminUserDto(Guid Id, string Nickname, string Email, string Country, string Role, int BarrelLevel, bool IsActive, DateTime CreatedAt, DateTime? LastLoginAt, int TastingCount, int CollectionCount);
 public record AdminWhiskeyDto(Guid Id, string Name, string Brand, int? Age, string Country, string Region, string Distillery, int CategoryId, string CategoryName, int VolumeML, double AlcoholPercentage, string ImageUrl, string Description, double BodyProfile, double SmokinessProfile, double SweetnessProfile, double? AlcoholProfile, decimal MinMarketPriceIls, decimal MaxMarketPriceIls, bool IsActive, DateTime CreatedAt, DateTime UpdatedAt);
-public record CreateWhiskeyRequest(string Name, string Brand, int? Age, string Country, string Region, string Distillery, int CategoryId, int VolumeML, double AlcoholPercentage, string ImageUrl, string Description, double BodyProfile, double SmokinessProfile, double SweetnessProfile, double? AlcoholProfile, decimal MinMarketPriceIls, decimal MaxMarketPriceIls);
+public record CreateWhiskeyRequest(string Name, string Brand, int? Age, string Country, string Region, string Distillery, int CategoryId, int VolumeML, double AlcoholPercentage, string ImageUrl, string Description, double BodyProfile, double SmokinessProfile, double SweetnessProfile, double? AlcoholProfile, decimal MinMarketPriceIls, decimal MaxMarketPriceIls, Guid? RequestId = null);
 public record UpdateWhiskeyRequest(string Name, string Brand, int? Age, string Country, string Region, string Distillery, int CategoryId, int VolumeML, double AlcoholPercentage, string ImageUrl, string Description, double BodyProfile, double SmokinessProfile, double SweetnessProfile, double? AlcoholProfile, decimal MinMarketPriceIls, decimal MaxMarketPriceIls);
 public record UpdateMarketPricesRequest(decimal MinMarketPriceIls, decimal MaxMarketPriceIls);
 public record AdminWhiskeyRequestDto(Guid Id, Guid UserId, string UserNickname, string Name, string Brand, string? Details, string Status, string? AdminNotes, Guid? ApprovedWhiskeyId, DateTime CreatedAt);
@@ -50,3 +50,4 @@ public record CreateCategoryRequest(string Name);
 public record UpdateCategoryRequest(string Name);
 public record UpdateUserStatusRequest(bool IsActive);
 public record UpdateUserRoleRequest(string Role);
+public record RegisterPushTokenRequest(string Token);

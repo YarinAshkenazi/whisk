@@ -72,6 +72,23 @@ public class ProfileController : ControllerBase
         return Ok(new AuthResponse(token, true, user.Role.ToString()));
     }
 
+    [HttpPut("push-token")]
+    public async Task<IActionResult> RegisterPushToken([FromBody] RegisterPushTokenRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Token))
+            return BadRequest(new { error = "Token is required" });
+
+        var userId = User.GetUserId();
+        var user = await _db.Users.FindAsync(userId);
+        if (user == null || !user.IsActive) return NotFound();
+
+        user.ExpoPushToken = request.Token;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        return Ok(new { message = "Push token registered" });
+    }
+
     [HttpDelete("me")]
     public async Task<IActionResult> DeleteAccount()
     {
