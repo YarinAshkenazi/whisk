@@ -1,13 +1,15 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors, spacing, borderRadius, shadows } from '../theme';
+import { getWhiskeyImageUrl } from '../constants';
 import MatchBadge from './MatchBadge';
 
 export default function WhiskeyCard({ whiskey, onPress, showMatch = true }) {
   const avg = ((whiskey.minMarketPriceIls || 0) + (whiskey.maxMarketPriceIls || 0)) / 2;
+  const imgUri = getWhiskeyImageUrl(whiskey.imageUrl);
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
-      <Image source={{ uri: whiskey.imageUrl }} style={styles.image} />
+      <Image source={imgUri ? { uri: imgUri } : undefined} style={styles.image} />
       <View style={styles.info}>
         <Text style={styles.name} numberOfLines={2}>{whiskey.name}</Text>
         <Text style={styles.brand}>{whiskey.brand}</Text>

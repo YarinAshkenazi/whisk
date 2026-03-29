@@ -2,6 +2,7 @@ using System.Text;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Whisk.Api.Middleware;
@@ -82,6 +83,15 @@ app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+// Serve uploaded whiskey images as static files at /WhiskImages/{filename}
+var imagesPath = Path.Combine(app.Environment.ContentRootPath, "WhiskImages");
+Directory.CreateDirectory(imagesPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(imagesPath),
+    RequestPath = "/WhiskImages"
+});
 
 app.UseCors();
 app.UseAuthentication();

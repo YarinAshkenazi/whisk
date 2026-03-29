@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Alert, Text, View, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, Alert, Text, View, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { colors, spacing, typography } from '../../theme';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import { useAdminCategories } from '../../hooks/useApi';
 import { adminApi } from '../../api/admin';
 import { useQueryClient } from '@tanstack/react-query';
+import { getWhiskeyImageUrl } from '../../constants';
 
 export default function AdminEditWhiskeyScreen({ navigation, route }) {
   const existing = route.params?.whiskey;
@@ -33,25 +35,75 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
     maxMarketPriceIls: existing?.maxMarketPriceIls?.toString() || '',
   });
 
+  const [localImageUri, setLocalImageUri] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
   const setField = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  const pickImage = async (useCamera) => {
+    const permMethod = useCamera
+      ? ImagePicker.requestCameraPermissionsAsync
+      : ImagePicker.requestMediaLibraryPermissionsAsync;
+    const { status } = await permMethod();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', `Please allow ${useCamera ? 'camera' : 'photo library'} access.`);
+      return;
+    }
+
+    const launchMethod = useCamera
+      ? ImagePicker.launchCameraAsync
+      : ImagePicker.launchImageLibraryAsync;
+
+    const result = await launchMethod({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [3, 4],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets?.[0]) {
+      setLocalImageUri(result.assets[0].uri);
+    }
+  };
+
+  const showImageOptions = () => {
+    Alert.alert('Bottle Image', 'Choose image source', [
+      { text: 'Camera', onPress: () => pickImage(true) },
+      { text: 'Gallery', onPress: () => pickImage(false) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const displayImageUri = localImageUri || getWhiskeyImageUrl(form.imageUrl);
 
   const handleSave = async () => {
     if (!form.name || !form.brand || !form.country) return Alert.alert('Required', 'Name, brand, and country are required');
-    const payload = {
-      ...form,
-      age: form.age ? Number(form.age) : null,
-      categoryId: Number(form.categoryId),
-      volumeML: Number(form.volumeML),
-      alcoholPercentage: Number(form.alcoholPercentage),
-      bodyProfile: Number(form.bodyProfile),
-      smokinessProfile: Number(form.smokinessProfile),
-      sweetnessProfile: Number(form.sweetnessProfile),
-      alcoholProfile: form.alcoholProfile ? Number(form.alcoholProfile) : null,
-      minMarketPriceIls: Number(form.minMarketPriceIls),
-      maxMarketPriceIls: Number(form.maxMarketPriceIls),
-    };
 
     try {
+      let imageFileName = form.imageUrl;
+
+      if (localImageUri) {
+        setUploading(true);
+        const uploadRes = await adminApi.uploadImage(localImageUri);
+        imageFileName = uploadRes.data.fileName;
+        setUploading(false);
+      }
+
+      const payload = {
+        ...form,
+        imageUrl: imageFileName,
+        age: form.age ? Number(form.age) : null,
+        categoryId: Number(form.categoryId),
+        volumeML: Number(form.volumeML),
+        alcoholPercentage: Number(form.alcoholPercentage),
+        bodyProfile: Number(form.bodyProfile),
+        smokinessProfile: Number(form.smokinessProfile),
+        sweetnessProfile: Number(form.sweetnessProfile),
+        alcoholProfile: form.alcoholProfile ? Number(form.alcoholProfile) : null,
+        minMarketPriceIls: Number(form.minMarketPriceIls),
+        maxMarketPriceIls: Number(form.maxMarketPriceIls),
+      };
+
       if (isEdit) {
         await adminApi.updateWhiskey(existing.id, payload);
       } else {
@@ -61,7 +113,8 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
       qc.invalidateQueries({ queryKey: ['whiskies'] });
       navigation.goBack();
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.[0] || 'Failed to save');
+      setUploading(false);
+      Alert.alert('Error', e.response?.data?.error || e.response?.data?.[0] || 'Failed to save');
     }
   };
 
@@ -88,7 +141,24 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
         <View style={{ flex: 1 }}><Input label="ABV (%)" value={form.alcoholPercentage} onChangeText={v => setField('alcoholPercentage', v)} keyboardType="numeric" /></View>
       </View>
 
-      <Input label="Image URL" value={form.imageUrl} onChangeText={v => setField('imageUrl', v)} />
+      <Text style={styles.label}>Bottle Image</Text>
+      <TouchableOpacity style={styles.imagePicker} onPress={showImageOptions} activeOpacity={0.7}>
+        {displayImageUri ? (
+          <Image source={{ uri: displayImageUri }} style={styles.imagePreview} />
+        ) : (
+          <View style={styles.imagePlaceholder}>
+            <Text style={styles.imagePlaceholderIcon}>{'\u{1F4F7}'}</Text>
+            <Text style={styles.imagePlaceholderText}>Tap to add image</Text>
+          </View>
+        )}
+        {uploading && (
+          <View style={styles.uploadingOverlay}>
+            <ActivityIndicator color={colors.accent} size="large" />
+            <Text style={styles.uploadingText}>Uploading...</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+
       <Input label="Description" value={form.description} onChangeText={v => setField('description', v)} multiline numberOfLines={3} />
 
       <Text style={styles.sectionTitle}>Flavor Profile (0-10)</Text>
@@ -107,7 +177,7 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
         <View style={{ flex: 1 }}><Input label="Max" value={form.maxMarketPriceIls} onChangeText={v => setField('maxMarketPriceIls', v)} keyboardType="numeric" /></View>
       </View>
 
-      <Button title={isEdit ? 'Save Changes' : 'Create Whiskey'} onPress={handleSave} style={{ marginTop: spacing.md }} />
+      <Button title={uploading ? 'Uploading...' : (isEdit ? 'Save Changes' : 'Create Whiskey')} onPress={handleSave} disabled={uploading} style={{ marginTop: spacing.md }} />
     </ScrollView>
   );
 }
@@ -122,4 +192,11 @@ const styles = StyleSheet.create({
   chipText: { color: colors.textSecondary, fontSize: 12 },
   row: { flexDirection: 'row' },
   sectionTitle: { ...typography.h3, marginTop: spacing.md, marginBottom: spacing.sm },
+  imagePicker: { width: '100%', height: 200, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed', marginBottom: spacing.lg, overflow: 'hidden' },
+  imagePreview: { width: '100%', height: '100%', resizeMode: 'cover' },
+  imagePlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  imagePlaceholderIcon: { fontSize: 40, marginBottom: 8 },
+  imagePlaceholderText: { color: colors.textMuted, fontSize: 14 },
+  uploadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' },
+  uploadingText: { color: '#FFF', marginTop: 8, fontSize: 14 },
 });

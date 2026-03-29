@@ -9,6 +9,14 @@ export const adminApi = {
   createWhiskey: (data) => apiClient.post('/admin/whiskies', data),
   updateWhiskey: (id, data) => apiClient.put(`/admin/whiskies/${id}`, data),
   deleteWhiskey: (id) => apiClient.delete(`/admin/whiskies/${id}`),
+  uploadImage: (uri) => {
+    const ext = uri.split('.').pop()?.toLowerCase() || 'jpg';
+    const formData = new FormData();
+    formData.append('file', { uri, name: `upload.${ext}`, type: `image/${ext === 'jpg' ? 'jpeg' : ext}` });
+    return apiClient.post('/admin/whiskies/upload-image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
   getCategories: () => apiClient.get('/admin/categories'),
   createCategory: (data) => apiClient.post('/admin/categories', data),
   updateCategory: (id, data) => apiClient.put(`/admin/categories/${id}`, data),

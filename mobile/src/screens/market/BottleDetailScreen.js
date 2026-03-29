@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, ScrollView, StyleSheet } from 'react-native';
 import { colors, spacing, borderRadius, typography } from '../../theme';
+import { getWhiskeyImageUrl } from '../../constants';
 import Button from '../../components/Button';
 import MatchBadge from '../../components/MatchBadge';
 import LoadingScreen from '../../components/LoadingScreen';
@@ -25,7 +26,7 @@ export default function BottleDetailScreen({ route, navigation }) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Image source={{ uri: w.imageUrl }} style={styles.image} />
+      <Image source={getWhiskeyImageUrl(w.imageUrl) ? { uri: getWhiskeyImageUrl(w.imageUrl) } : undefined} style={styles.image} />
 
       <View style={styles.header}>
         <View style={{ flex: 1 }}>

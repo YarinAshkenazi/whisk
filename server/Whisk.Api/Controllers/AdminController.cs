@@ -15,8 +15,17 @@ namespace Whisk.Api.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly IWhiskDbContext _db;
+    private readonly IWebHostEnvironment _env;
 
-    public AdminController(IWhiskDbContext db) => _db = db;
+    private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
+        { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+    private const long MaxImageSize = 10 * 1024 * 1024; // 10 MB
+
+    public AdminController(IWhiskDbContext db, IWebHostEnvironment env)
+    {
+        _db = db;
+        _env = env;
+    }
 
     [HttpGet("dashboard")]
     public async Task<ActionResult<AdminDashboardDto>> GetDashboard()
@@ -130,6 +139,31 @@ public class AdminController : ControllerBase
         whiskey.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return Ok(new { message = "Whiskey deactivated" });
+    }
+
+    [HttpPost("whiskies/upload-image")]
+    [RequestSizeLimit(MaxImageSize)]
+    public async Task<ActionResult> UploadImage(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(new { error = "No file provided" });
+
+        if (file.Length > MaxImageSize)
+            return BadRequest(new { error = "File exceeds 10 MB limit" });
+
+        var ext = Path.GetExtension(file.FileName);
+        if (string.IsNullOrEmpty(ext) || !AllowedExtensions.Contains(ext))
+            return BadRequest(new { error = "Only image files are allowed (.jpg, .jpeg, .png, .webp, .gif)" });
+
+        var fileName = $"{Guid.NewGuid()}{ext.ToLowerInvariant()}";
+        var folder = Path.Combine(_env.ContentRootPath, "WhiskImages");
+        Directory.CreateDirectory(folder);
+
+        var filePath = Path.Combine(folder, fileName);
+        await using var stream = new FileStream(filePath, FileMode.Create);
+        await file.CopyToAsync(stream);
+
+        return Ok(new { fileName });
     }
 
     [HttpGet("categories")]

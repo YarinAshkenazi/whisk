@@ -4,6 +4,13 @@ import { Platform } from 'react-native';
 // Android emulator: 10.0.2.2 maps to host loopback
 const DEV_HOST = Platform.select({ android: '10.0.2.2', default: 'YarinLaptop.local' });
 export const API_URL = __DEV__ ? `http://${DEV_HOST}:5000/api` : 'https://api.whisk.app/api';
+export const BASE_URL = __DEV__ ? `http://${DEV_HOST}:5000` : 'https://api.whisk.app';
+
+export function getWhiskeyImageUrl(imageUrl) {
+  if (!imageUrl) return null;
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl;
+  return `${BASE_URL}/WhiskImages/${imageUrl}`;
+}
 
 export const COLLECTION_STATUS = {
   CLOSED: 'Closed',
