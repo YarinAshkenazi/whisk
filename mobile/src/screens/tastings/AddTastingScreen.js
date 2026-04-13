@@ -5,6 +5,7 @@ import Button from '../../components/Button';
 import DeltaSlider from '../../components/DeltaSlider';
 import Input from '../../components/Input';
 import { useAddTasting } from '../../hooks/useApi';
+import { useFeedback } from '../../utils/feedback';
 
 export default function AddTastingScreen({ navigation, route }) {
   const { whiskeyId, whiskeyName } = route.params;
@@ -15,6 +16,7 @@ export default function AddTastingScreen({ navigation, route }) {
   const [notes, setNotes] = useState('');
   const [isOwned, setIsOwned] = useState(true);
   const mutation = useAddTasting();
+  const { playRatingTick, playSuccess, playError } = useFeedback();
 
   const handleSave = async () => {
     try {
@@ -22,10 +24,12 @@ export default function AddTastingScreen({ navigation, route }) {
         whiskeyId, tastingDate: new Date().toISOString(), isOwned, notes: notes || null,
         bodyDelta: body, smokeDelta: smoke, sweetDelta: sweet, alcoholDelta: alcohol,
       });
+      playSuccess();
       Alert.alert('Tasting Added', `Personal fit: ${result.personalFitPercent}%`, [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (e) {
+      playError();
       Alert.alert('Error', 'Failed to save tasting');
     }
   };
@@ -35,10 +39,10 @@ export default function AddTastingScreen({ navigation, route }) {
       <Text style={styles.title}>{whiskeyName}</Text>
       <Text style={styles.subtitle}>Rate how this bottle matches your taste</Text>
 
-      <DeltaSlider label="Body" value={body} onChange={setBody} leftLabel="Too light" rightLabel="Too heavy" />
-      <DeltaSlider label="Smokiness" value={smoke} onChange={setSmoke} leftLabel="Not smoky enough" rightLabel="Too smoky" />
-      <DeltaSlider label="Sweetness" value={sweet} onChange={setSweet} leftLabel="Not sweet enough" rightLabel="Too sweet" />
-      <DeltaSlider label="Alcohol" value={alcohol} onChange={setAlcohol} leftLabel="Too mild" rightLabel="Too strong" />
+      <DeltaSlider label="Body" value={body} onChange={setBody} onFeedback={playRatingTick} leftLabel="Too light" rightLabel="Too heavy" />
+      <DeltaSlider label="Smokiness" value={smoke} onChange={setSmoke} onFeedback={playRatingTick} leftLabel="Not smoky enough" rightLabel="Too smoky" />
+      <DeltaSlider label="Sweetness" value={sweet} onChange={setSweet} onFeedback={playRatingTick} leftLabel="Not sweet enough" rightLabel="Too sweet" />
+      <DeltaSlider label="Alcohol" value={alcohol} onChange={setAlcohol} onFeedback={playRatingTick} leftLabel="Too mild" rightLabel="Too strong" />
 
       <Input label="Notes (optional)" value={notes} onChangeText={setNotes} placeholder="Your impressions..." multiline numberOfLines={3} />
 

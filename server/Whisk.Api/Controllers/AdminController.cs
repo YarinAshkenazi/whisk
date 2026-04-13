@@ -166,15 +166,31 @@ public class AdminController : ControllerBase
         return Ok(new AdminWhiskeyDto(whiskey.Id, whiskey.Name, whiskey.Brand, whiskey.Age, whiskey.Country, whiskey.Region, whiskey.Distillery, whiskey.CategoryId, cat!.Name, whiskey.VolumeML, whiskey.AlcoholPercentage, whiskey.ImageUrl, whiskey.Description, whiskey.BodyProfile, whiskey.SmokinessProfile, whiskey.SweetnessProfile, whiskey.AlcoholProfile, whiskey.MinMarketPriceIls, whiskey.MaxMarketPriceIls, whiskey.IsActive, whiskey.CreatedAt, whiskey.UpdatedAt));
     }
 
+    [HttpPut("whiskies/{id}/status")]
+    public async Task<IActionResult> UpdateWhiskeyStatus(Guid id, [FromBody] UpdateWhiskeyStatusRequest request)
+    {
+        var whiskey = await _db.Whiskies.FindAsync(id);
+        if (whiskey == null) return NotFound();
+        whiskey.IsActive = request.IsActive;
+        whiskey.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        return Ok(new { message = $"Whiskey {(request.IsActive ? "activated" : "deactivated")}" });
+    }
+
     [HttpDelete("whiskies/{id}")]
     public async Task<IActionResult> DeleteWhiskey(Guid id)
     {
         var whiskey = await _db.Whiskies.FindAsync(id);
         if (whiskey == null) return NotFound();
-        whiskey.IsActive = false;
-        whiskey.UpdatedAt = DateTime.UtcNow;
+
+        var hasTastings = await _db.TastingNotes.AnyAsync(t => t.WhiskeyId == id);
+        var hasCollection = await _db.CollectionItems.AnyAsync(c => c.WhiskeyId == id);
+        if (hasTastings || hasCollection)
+            return BadRequest(new { error = "Cannot delete: this whiskey has tastings or collection entries. Deactivate it instead." });
+
+        _db.Whiskies.Remove(whiskey);
         await _db.SaveChangesAsync();
-        return Ok(new { message = "Whiskey deactivated" });
+        return Ok(new { message = "Whiskey permanently deleted" });
     }
 
     [HttpPost("whiskies/upload-image")]
@@ -215,7 +231,8 @@ public class AdminController : ControllerBase
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid) return BadRequest(validation.Errors.Select(e => e.ErrorMessage));
 
-        var cat = new WhiskeyCategory { Name = request.Name };
+        var nextId = (await _db.WhiskeyCategories.MaxAsync(c => (int?)c.Id) ?? 0) + 1;
+        var cat = new WhiskeyCategory { Id = nextId, Name = request.Name };
         _db.WhiskeyCategories.Add(cat);
         await _db.SaveChangesAsync();
         return CreatedAtAction(nameof(GetCategories), null, new CategoryDto(cat.Id, cat.Name, cat.IsActive));

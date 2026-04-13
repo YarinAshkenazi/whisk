@@ -4,6 +4,7 @@ import { colors, spacing, typography } from '../../theme';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import { useAddCollectionItem } from '../../hooks/useApi';
+import { useFeedback } from '../../utils/feedback';
 
 export default function AddCollectionScreen({ navigation, route }) {
   const { whiskeyId, whiskeyName } = route.params;
@@ -11,6 +12,7 @@ export default function AddCollectionScreen({ navigation, route }) {
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState('Closed');
   const mutation = useAddCollectionItem();
+  const { playCollectionAdd, playError } = useFeedback();
 
   const handleSave = async () => {
     try {
@@ -21,9 +23,11 @@ export default function AddCollectionScreen({ navigation, route }) {
         status,
         notes: notes || null,
       });
+      playCollectionAdd();
       Alert.alert('Added', 'Bottle added to collection');
       navigation.goBack();
     } catch (e) {
+      playError();
       Alert.alert('Error', 'Failed to add to collection');
     }
   };

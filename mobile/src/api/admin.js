@@ -8,6 +8,7 @@ export const adminApi = {
   getWhiskies: () => apiClient.get('/admin/whiskies'),
   createWhiskey: (data) => apiClient.post('/admin/whiskies', data),
   updateWhiskey: (id, data) => apiClient.put(`/admin/whiskies/${id}`, data),
+  updateWhiskeyStatus: (id, isActive) => apiClient.put(`/admin/whiskies/${id}/status`, { isActive }),
   deleteWhiskey: (id) => apiClient.delete(`/admin/whiskies/${id}`),
   uploadImage: (uri) => {
     const ext = uri.split('.').pop()?.toLowerCase() || 'jpg';

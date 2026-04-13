@@ -1,18 +1,27 @@
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { colors, spacing, borderRadius } from '../theme';
+import { colors, spacing } from '../theme';
 
-export default function DeltaSlider({ label, value, onChange, leftLabel = 'Too weak', rightLabel = 'Too strong' }) {
+export default function DeltaSlider({ label, value, onChange, onFeedback, leftLabel = 'Too weak', rightLabel = 'Too strong' }) {
+  const lastValue = useRef(value);
+
+  const handlePress = useCallback((i) => {
+    if (i !== lastValue.current) {
+      onFeedback?.();
+      lastValue.current = i;
+    }
+    onChange(i);
+  }, [onChange, onFeedback]);
+
   const dots = [];
   for (let i = -5; i <= 5; i++) {
     const isActive = i === value;
     const isPositive = i > 0;
-    const isNegative = i < 0;
     const dotColor = isActive
       ? (i === 0 ? colors.success : isPositive ? colors.error : colors.warning)
       : colors.border;
     dots.push(
-      <TouchableOpacity key={i} onPress={() => onChange(i)} style={styles.dotWrapper}>
+      <TouchableOpacity key={i} onPress={() => handlePress(i)} style={styles.dotWrapper}>
         <View style={[styles.dot, { backgroundColor: dotColor }, isActive && styles.dotActive]} />
         {(i === -5 || i === 0 || i === 5) && <Text style={styles.dotLabel}>{i}</Text>}
       </TouchableOpacity>

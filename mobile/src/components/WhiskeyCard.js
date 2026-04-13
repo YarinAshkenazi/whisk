@@ -4,8 +4,7 @@ import { colors, spacing, borderRadius, shadows } from '../theme';
 import { getWhiskeyImageUrl } from '../constants';
 import MatchBadge from './MatchBadge';
 
-export default function WhiskeyCard({ whiskey, onPress, showMatch = true }) {
-  const avg = ((whiskey.minMarketPriceIls || 0) + (whiskey.maxMarketPriceIls || 0)) / 2;
+export default React.memo(function WhiskeyCard({ whiskey, onPress, showMatch = true }) {
   const imgUri = getWhiskeyImageUrl(whiskey.imageUrl);
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
@@ -14,12 +13,14 @@ export default function WhiskeyCard({ whiskey, onPress, showMatch = true }) {
         <Text style={styles.name} numberOfLines={2}>{whiskey.name}</Text>
         <Text style={styles.brand}>{whiskey.brand}</Text>
         <Text style={styles.category}>{whiskey.categoryName}{whiskey.age ? ` \u2022 ${whiskey.age}yr` : ''}</Text>
-        <Text style={styles.price}>\u20AA{whiskey.minMarketPriceIls?.toFixed(0)} - {whiskey.maxMarketPriceIls?.toFixed(0)}</Text>
+        {whiskey.minMarketPriceIls != null && whiskey.maxMarketPriceIls != null && (
+          <Text style={styles.price}>₪{whiskey.minMarketPriceIls.toFixed(0)} - ₪{whiskey.maxMarketPriceIls.toFixed(0)}</Text>
+        )}
       </View>
       {showMatch && <View style={styles.matchContainer}><MatchBadge percent={whiskey.matchPercent} /></View>}
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: borderRadius.lg, padding: spacing.sm + 2, marginBottom: spacing.sm + 2, ...shadows.card, alignItems: 'center' },

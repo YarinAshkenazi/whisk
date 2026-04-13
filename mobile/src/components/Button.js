@@ -18,13 +18,13 @@ export default function Button({ title, onPress, variant = 'primary', loading, d
       disabled={disabled || loading}
       activeOpacity={0.7}
     >
-      {loading ? <ActivityIndicator color={v.text} /> : <Text style={[styles.text, { color: v.text }]}>{title}</Text>}
+      {loading ? <ActivityIndicator color={v.text} /> : <Text numberOfLines={1} style={[styles.text, { color: v.text }]}>{title}</Text>}
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  btn: { paddingVertical: 14, paddingHorizontal: spacing.lg, borderRadius: borderRadius.md, alignItems: 'center', justifyContent: 'center', minHeight: 48 },
-  text: { fontSize: 16, fontWeight: '600' },
+  btn: { paddingVertical: 14, paddingHorizontal: spacing.md, borderRadius: borderRadius.md, alignItems: 'center', justifyContent: 'center', minHeight: 48 },
+  text: { fontSize: 15, fontWeight: '600' },
   disabled: { opacity: 0.5 },
 });

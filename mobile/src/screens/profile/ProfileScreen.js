@@ -1,18 +1,23 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, Switch } from 'react-native';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import Button from '../../components/Button';
 import Card from '../../components/Card';
 import BarrelLevel from '../../components/BarrelLevel';
 import LoadingScreen from '../../components/LoadingScreen';
-import { useProfile } from '../../hooks/useApi';
+import { useProfile, useCollectionSummary } from '../../hooks/useApi';
 import { useAuthStore } from '../../store/authStore';
 import { profileApi } from '../../api/profile';
 import { USER_ROLES } from '../../constants';
+import { useBiometricsContext } from '../../hooks/BiometricsContext';
+import { useFeedbackStore } from '../../store/feedbackStore';
 
 export default function ProfileScreen({ navigation }) {
   const { data: profile, isLoading } = useProfile();
+  const { data: collectionSummary } = useCollectionSummary();
   const { logout, user } = useAuthStore();
+  const biometrics = useBiometricsContext();
+  const { soundEnabled, hapticEnabled, setSoundEnabled, setHapticEnabled } = useFeedbackStore();
 
   if (isLoading) return <LoadingScreen />;
 
@@ -43,10 +48,44 @@ export default function ProfileScreen({ navigation }) {
       </View>
 
       <Card style={styles.levelCard}>
-        <BarrelLevel level={profile?.barrelLevel || 0} />
+        <BarrelLevel
+          level={collectionSummary?.barrelLevel ?? profile?.barrelLevel ?? 0}
+          totalBottles={collectionSummary?.totalBottles ?? 0}
+        />
       </Card>
 
       <Button title="Edit Profile" onPress={() => navigation.navigate('EditProfile', { profile })} variant="secondary" />
+
+      <Card style={styles.prefsSection}>
+        <Text style={styles.sectionTitle}>Preferences</Text>
+        <View style={styles.toggleRow}>
+          <Text style={styles.toggleLabel}>{biometrics.label}</Text>
+          <Switch
+            value={biometrics.isEnabled}
+            onValueChange={biometrics.toggle}
+            trackColor={{ false: colors.border, true: colors.accent }}
+            thumbColor={biometrics.isEnabled ? colors.text : colors.textSecondary}
+          />
+        </View>
+        <View style={[styles.toggleRow, styles.toggleRowSpaced]}>
+          <Text style={styles.toggleLabel}>Sound Effects</Text>
+          <Switch
+            value={soundEnabled}
+            onValueChange={setSoundEnabled}
+            trackColor={{ false: colors.border, true: colors.accent }}
+            thumbColor={soundEnabled ? colors.text : colors.textSecondary}
+          />
+        </View>
+        <View style={[styles.toggleRow, styles.toggleRowSpaced]}>
+          <Text style={styles.toggleLabel}>Haptic Feedback</Text>
+          <Switch
+            value={hapticEnabled}
+            onValueChange={setHapticEnabled}
+            trackColor={{ false: colors.border, true: colors.accent }}
+            thumbColor={hapticEnabled ? colors.text : colors.textSecondary}
+          />
+        </View>
+      </Card>
 
       {isAdmin && (
         <View style={styles.adminSection}>
@@ -78,6 +117,10 @@ const styles = StyleSheet.create({
   adminBadge: { backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, marginTop: spacing.sm },
   adminText: { color: '#FFF', fontSize: 12, fontWeight: '600' },
   levelCard: { marginBottom: spacing.md },
+  prefsSection: { marginTop: spacing.lg, padding: spacing.md },
+  toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  toggleRowSpaced: { marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
+  toggleLabel: { ...typography.body, flex: 1 },
   adminSection: { marginTop: spacing.xl, padding: spacing.md, backgroundColor: colors.surface, borderRadius: borderRadius.lg },
   sectionTitle: { ...typography.h3, marginBottom: spacing.md, color: colors.accent },
   adminBtn: { marginBottom: spacing.sm },

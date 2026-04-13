@@ -8,6 +8,7 @@ import { useAdminCategories } from '../../hooks/useApi';
 import { adminApi } from '../../api/admin';
 import { useQueryClient } from '@tanstack/react-query';
 import { getWhiskeyImageUrl } from '../../constants';
+import { useFeedback } from '../../utils/feedback';
 
 export default function AdminEditWhiskeyScreen({ navigation, route }) {
   const existing = route.params?.whiskey;
@@ -15,6 +16,7 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
   const isEdit = !!existing;
   const { data: categories } = useAdminCategories();
   const qc = useQueryClient();
+  const { playSuccess, playError } = useFeedback();
 
   const source = existing || prefill || {};
   const [form, setForm] = useState({
@@ -115,9 +117,11 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
       qc.invalidateQueries({ queryKey: ['adminWhiskies'] });
       qc.invalidateQueries({ queryKey: ['whiskies'] });
       if (prefill?.requestId) qc.invalidateQueries({ queryKey: ['adminRequests'] });
+      playSuccess();
       navigation.goBack();
     } catch (e) {
       setUploading(false);
+      playError();
       Alert.alert('Error', e.response?.data?.error || e.response?.data?.[0] || 'Failed to save');
     }
   };

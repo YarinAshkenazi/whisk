@@ -50,4 +50,5 @@ public record CreateCategoryRequest(string Name);
 public record UpdateCategoryRequest(string Name);
 public record UpdateUserStatusRequest(bool IsActive);
 public record UpdateUserRoleRequest(string Role);
+public record UpdateWhiskeyStatusRequest(bool IsActive);
 public record RegisterPushTokenRequest(string Token);

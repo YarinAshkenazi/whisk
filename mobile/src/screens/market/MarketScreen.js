@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, RefreshControl } from 'react-native';
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import WhiskeyCard from '../../components/WhiskeyCard';
@@ -8,18 +8,82 @@ import Card from '../../components/Card';
 import MatchBadge from '../../components/MatchBadge';
 import { useWhiskies, useRecommendations, useRecommendationStatus } from '../../hooks/useApi';
 
+const PAGE_SIZE = 20;
+const SORT_OPTIONS = ['name', 'price', 'age', 'match'];
+
+const MarketCard = React.memo(function MarketCard({ whiskey, onNavigate }) {
+  return (
+    <WhiskeyCard
+      whiskey={whiskey}
+      onPress={() => onNavigate(whiskey.id)}
+    />
+  );
+});
+
 export default function MarketScreen({ navigation }) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState('name');
   const [filters, setFilters] = useState({});
+  const [allItems, setAllItems] = useState([]);
+  const totalCountRef = useRef(0);
+  const loadingPageRef = useRef(false);
 
-  const params = { search, page, pageSize: 20, sortBy, sortDesc: false, ...filters };
-  const { data, isLoading, refetch } = useWhiskies(params);
+  const params = useMemo(
+    () => ({ search, page, pageSize: PAGE_SIZE, sortBy, sortDesc: false, ...filters }),
+    [search, page, sortBy, filters],
+  );
+  const { data, isLoading, isFetching, refetch } = useWhiskies(params);
   const { data: recs } = useRecommendations();
   const { data: recStatus } = useRecommendationStatus();
 
-  const renderRecommendations = () => {
+  useEffect(() => {
+    if (!data?.items) return;
+    loadingPageRef.current = false;
+    totalCountRef.current = data.totalCount ?? 0;
+    setAllItems(prev => {
+      if (page === 1) return data.items;
+      const ids = new Set(prev.map(i => i.id));
+      const fresh = data.items.filter(i => !ids.has(i.id));
+      if (fresh.length === 0) return prev;
+      return [...prev, ...fresh];
+    });
+  }, [data, page]);
+
+  const navigateToBottle = useCallback((id) => {
+    navigation.navigate('BottleDetail', { id });
+  }, [navigation]);
+
+  const handleSearch = useCallback((t) => {
+    setSearch(t);
+    setPage(1);
+  }, []);
+
+  const handleSort = useCallback((s) => {
+    setSortBy(s);
+    setPage(1);
+  }, []);
+
+  const handleEndReached = useCallback(() => {
+    if (loadingPageRef.current || isFetching) return;
+    if (allItems.length < totalCountRef.current) {
+      loadingPageRef.current = true;
+      setPage(p => p + 1);
+    }
+  }, [isFetching, allItems.length]);
+
+  const handleRefresh = useCallback(() => {
+    setPage(1);
+    refetch();
+  }, [refetch]);
+
+  const renderItem = useCallback(({ item }) => (
+    <MarketCard whiskey={item} onNavigate={navigateToBottle} />
+  ), [navigateToBottle]);
+
+  const keyExtractor = useCallback((item) => item.id, []);
+
+  const recommendations = useMemo(() => {
     if (!recStatus?.isUnlocked) {
       return (
         <Card style={styles.recCard}>
@@ -46,9 +110,7 @@ export default function MarketScreen({ navigation }) {
         />
       </Card>
     );
-  };
-
-  const sortOptions = ['name', 'price', 'age', 'match'];
+  }, [recStatus, recs, navigation]);
 
   return (
     <View style={styles.container}>
@@ -58,7 +120,7 @@ export default function MarketScreen({ navigation }) {
           placeholder="Search whiskies..."
           placeholderTextColor={colors.textMuted}
           value={search}
-          onChangeText={(t) => { setSearch(t); setPage(1); }}
+          onChangeText={handleSearch}
         />
         <TouchableOpacity style={styles.filterBtn} onPress={() => navigation.navigate('Filters', { filters, setFilters: (f) => { setFilters(f); setPage(1); } })}>
           <Text style={styles.filterIcon}>{'\u{1F50D}'}</Text>
@@ -66,8 +128,8 @@ export default function MarketScreen({ navigation }) {
       </View>
 
       <View style={styles.sortRow}>
-        {sortOptions.map(s => (
-          <TouchableOpacity key={s} onPress={() => setSortBy(s)} style={[styles.sortChip, sortBy === s && styles.sortChipActive]}>
+        {SORT_OPTIONS.map(s => (
+          <TouchableOpacity key={s} onPress={() => handleSort(s)} style={[styles.sortChip, sortBy === s && styles.sortChipActive]}>
             <Text style={[styles.sortText, sortBy === s && styles.sortTextActive]}>{s.charAt(0).toUpperCase() + s.slice(1)}</Text>
           </TouchableOpacity>
         ))}
@@ -76,21 +138,23 @@ export default function MarketScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {isLoading && !data ? (
+      {isLoading && allItems.length === 0 ? (
         <LoadingScreen />
       ) : (
         <FlatList
-          data={data?.items || []}
-          keyExtractor={i => i.id}
-          ListHeaderComponent={renderRecommendations}
+          data={allItems}
+          keyExtractor={keyExtractor}
+          ListHeaderComponent={recommendations}
           ListEmptyComponent={<EmptyState icon={'\u{1F943}'} title="No whiskies found" message="Try adjusting your search or filters" />}
-          renderItem={({ item }) => (
-            <WhiskeyCard whiskey={item} onPress={() => navigation.navigate('BottleDetail', { id: item.id })} />
-          )}
+          renderItem={renderItem}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor={colors.accent} />}
-          onEndReached={() => { if (data && data.items.length < data.totalCount) setPage(p => p + 1); }}
-          onEndReachedThreshold={0.5}
+          refreshControl={<RefreshControl refreshing={false} onRefresh={handleRefresh} tintColor={colors.accent} />}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.3}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={11}
+          initialNumToRender={10}
         />
       )}
     </View>

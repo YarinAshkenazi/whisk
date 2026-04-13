@@ -50,7 +50,7 @@ export default function AdminUsersScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.name}>{item.nickname}</Text>
               <Text style={styles.email}>{item.email}</Text>
-              <Text style={styles.meta}>{item.country} \u2022 {item.role} \u2022 {item.tastingCount} tastings \u2022 {item.collectionCount} bottles</Text>
+              <Text style={styles.meta}>{item.country} {'\u2022'} {item.role} {'\u2022'} {item.tastingCount} tastings {'\u2022'} {item.collectionCount} bottles</Text>
             </View>
             <StatusChip status={item.isActive ? 'Active' : 'Inactive'} />
           </View>

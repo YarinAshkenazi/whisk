@@ -6,11 +6,12 @@ export default function MatchBadge({ percent, size = 'md' }) {
   if (percent == null) return null;
   const color = percent >= 75 ? colors.success : percent >= 50 ? colors.amber : colors.error;
   const sz = size === 'lg' ? 56 : size === 'sm' ? 32 : 42;
-  const fs = size === 'lg' ? 16 : size === 'sm' ? 10 : 13;
+  const baseFontSize = size === 'lg' ? 16 : size === 'sm' ? 10 : 13;
+  const fs = percent >= 100 ? baseFontSize - 2 : baseFontSize;
 
   return (
     <View style={[styles.badge, { width: sz, height: sz, borderColor: color }]}>
-      <Text style={[styles.text, { fontSize: fs, color }]}>{percent}%</Text>
+      <Text numberOfLines={1} style={[styles.text, { fontSize: fs, color }]}>{percent}%</Text>
     </View>
   );
 }

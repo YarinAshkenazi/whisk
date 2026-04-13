@@ -28,7 +28,11 @@ export const useAddCollectionItem = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data) => collectionApi.addItem(data).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['collection'] }); qc.invalidateQueries({ queryKey: ['collectionSummary'] }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['collection'] });
+      qc.invalidateQueries({ queryKey: ['collectionSummary'] });
+      qc.invalidateQueries({ queryKey: ['profile'] });
+    },
   });
 };
 
@@ -36,7 +40,11 @@ export const useUpdateCollectionItem = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }) => collectionApi.updateItem(id, data).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['collection'] }); qc.invalidateQueries({ queryKey: ['collectionSummary'] }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['collection'] });
+      qc.invalidateQueries({ queryKey: ['collectionSummary'] });
+      qc.invalidateQueries({ queryKey: ['profile'] });
+    },
   });
 };
 
@@ -44,7 +52,11 @@ export const useDeleteCollectionItem = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id) => collectionApi.deleteItem(id).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['collection'] }); qc.invalidateQueries({ queryKey: ['collectionSummary'] }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['collection'] });
+      qc.invalidateQueries({ queryKey: ['collectionSummary'] });
+      qc.invalidateQueries({ queryKey: ['profile'] });
+    },
   });
 };
 
