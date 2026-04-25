@@ -1,10 +1,13 @@
 import { Platform } from 'react-native';
 
-// Physical device (Expo Go): uses hostname so it works across different networks
-// Android emulator: 10.0.2.2 maps to host loopback
+const AZURE_BASE = 'https://whiskapi-htgygkgseyfsfkak.israelcentral-01.azurewebsites.net';
+
+// Set to true to use local backend instead of Azure
+const USE_LOCAL_API = false;
+
 const DEV_HOST = Platform.select({ android: '10.0.2.2', default: 'YarinLaptop.local' });
-export const API_URL = __DEV__ ? `http://${DEV_HOST}:5000/api` : 'https://api.whisk.app/api';
-export const BASE_URL = __DEV__ ? `http://${DEV_HOST}:5000` : 'https://api.whisk.app';
+export const BASE_URL = USE_LOCAL_API ? `http://${DEV_HOST}:5000` : AZURE_BASE;
+export const API_URL = `${BASE_URL}/api`;
 
 export function getWhiskeyImageUrl(imageUrl) {
   if (!imageUrl) return null;
