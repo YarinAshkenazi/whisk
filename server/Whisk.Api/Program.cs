@@ -10,6 +10,8 @@ using Whisk.Application;
 using Whisk.Infrastructure;
 using Whisk.Infrastructure.Persistence;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
@@ -71,12 +73,19 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Apply migrations and seed
+// Seed data (schema is managed externally via Supabase)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<WhiskDbContext>();
-    await db.Database.MigrateAsync();
-    await SeedData.SeedAsync(db);
+    try
+    {
+        await SeedData.SeedAsync(db);
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogWarning(ex, "Seed data skipped");
+    }
 }
 
 app.UseMiddleware<ExceptionMiddleware>();

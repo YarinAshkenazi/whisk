@@ -35,8 +35,8 @@ public class WhiskDbContext : DbContext, IWhiskDbContext
             e.Property(u => u.Role).HasConversion<string>().HasMaxLength(20).IsRequired();
             e.Property(u => u.AuthProvider).HasConversion<string>().HasMaxLength(20).IsRequired();
             e.Property(u => u.ExpoPushToken).HasMaxLength(256);
-            e.Property(u => u.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-            e.Property(u => u.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.Property(u => u.CreatedAt).HasDefaultValueSql("NOW()");
+            e.Property(u => u.UpdatedAt).HasDefaultValueSql("NOW()");
         });
 
         // ── WhiskeyCategory ──
@@ -46,7 +46,7 @@ public class WhiskDbContext : DbContext, IWhiskDbContext
             e.Property(c => c.Id).ValueGeneratedNever();
             e.Property(c => c.Name).IsRequired().HasMaxLength(100);
             e.HasIndex(c => c.Name).IsUnique();
-            e.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.Property(c => c.CreatedAt).HasDefaultValueSql("NOW()");
         });
 
         // ── Whiskey ──
@@ -62,8 +62,8 @@ public class WhiskDbContext : DbContext, IWhiskDbContext
             e.Property(w => w.Description).HasMaxLength(2000);
             e.Property(w => w.MinMarketPriceIls).HasColumnType("decimal(10,2)");
             e.Property(w => w.MaxMarketPriceIls).HasColumnType("decimal(10,2)");
-            e.Property(w => w.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-            e.Property(w => w.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.Property(w => w.CreatedAt).HasDefaultValueSql("NOW()");
+            e.Property(w => w.UpdatedAt).HasDefaultValueSql("NOW()");
 
             e.HasIndex(w => w.Name);
             e.HasIndex(w => w.Brand);
@@ -83,8 +83,8 @@ public class WhiskDbContext : DbContext, IWhiskDbContext
             e.Property(ci => ci.PurchasePriceIls).HasColumnType("decimal(10,2)");
             e.Property(ci => ci.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
             e.Property(ci => ci.Notes).HasMaxLength(1000);
-            e.Property(ci => ci.AddedAt).HasDefaultValueSql("GETUTCDATE()");
-            e.Property(ci => ci.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.Property(ci => ci.AddedAt).HasDefaultValueSql("NOW()");
+            e.Property(ci => ci.UpdatedAt).HasDefaultValueSql("NOW()");
 
             e.HasIndex(ci => ci.UserId);
             e.HasIndex(ci => ci.WhiskeyId);
@@ -106,8 +106,8 @@ public class WhiskDbContext : DbContext, IWhiskDbContext
         {
             e.HasKey(t => t.Id);
             e.Property(t => t.Notes).HasMaxLength(2000);
-            e.Property(t => t.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-            e.Property(t => t.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.Property(t => t.CreatedAt).HasDefaultValueSql("NOW()");
+            e.Property(t => t.UpdatedAt).HasDefaultValueSql("NOW()");
 
             e.HasIndex(t => t.UserId);
             e.HasIndex(t => t.WhiskeyId);
@@ -133,8 +133,8 @@ public class WhiskDbContext : DbContext, IWhiskDbContext
             e.Property(r => r.Details).HasMaxLength(1000);
             e.Property(r => r.AdminNotes).HasMaxLength(1000);
             e.Property(r => r.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
-            e.Property(r => r.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-            e.Property(r => r.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.Property(r => r.CreatedAt).HasDefaultValueSql("NOW()");
+            e.Property(r => r.UpdatedAt).HasDefaultValueSql("NOW()");
 
             e.HasIndex(r => r.UserId);
 
