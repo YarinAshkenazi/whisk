@@ -163,6 +163,10 @@ namespace Whisk.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("PasswordHash")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
                     b.Property<string>("ExpoPushToken")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");

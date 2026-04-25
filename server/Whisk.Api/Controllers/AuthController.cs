@@ -6,6 +6,7 @@ using Whisk.Application.DTOs;
 using Whisk.Application.Interfaces;
 using Whisk.Domain.Entities;
 using Whisk.Domain.Enums;
+using Whisk.Infrastructure.Security;
 
 namespace Whisk.Api.Controllers;
 
@@ -136,6 +137,40 @@ public class AuthController : ControllerBase
             user.Country = string.IsNullOrEmpty(user.Country) ? "Israel" : user.Country;
             user.Nickname = string.IsNullOrEmpty(user.Nickname) ? request.Email.Split('@')[0] : user.Nickname;
         }
+
+        if (string.IsNullOrWhiteSpace(user.PasswordHash))
+        {
+            if (string.Equals(user.Email, "admin@whisk.dev", StringComparison.OrdinalIgnoreCase))
+            {
+                user.PasswordHash = PasswordHasher.HashPassword("Admin123!");
+            }
+            else if (string.Equals(user.Email, "user@whisk.dev", StringComparison.OrdinalIgnoreCase))
+            {
+                user.PasswordHash = PasswordHasher.HashPassword("User123!");
+            }
+        }
+
+        user.LastLoginAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        var token = _tokenService.GenerateToken(user);
+        return Ok(new AuthResponse(token, user.IsOnboardingComplete, user.Role.ToString()));
+    }
+
+    [HttpPost("login")]
+    public async Task<ActionResult<AuthResponse>> Login([FromBody] EmailPasswordLoginRequest request)
+    {
+        var email = request.Email?.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(request.Password))
+            return BadRequest(new { error = "Email and password are required" });
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email);
+        if (user == null || !user.IsActive || string.IsNullOrWhiteSpace(user.PasswordHash) ||
+            !PasswordHasher.VerifyPassword(request.Password, user.PasswordHash))
+        {
+            return Unauthorized(new { error = "Invalid email or password" });
+        }
+
         user.LastLoginAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
 

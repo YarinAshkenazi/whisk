@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Alert, Platform } from 'react-native';
 import { colors, spacing, typography } from '../../theme';
 import Button from '../../components/Button';
+import Input from '../../components/Input';
 import { authApi } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
 
 export default function SignInScreen() {
   const [loading, setLoading] = useState(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
   const { setAuth } = useAuthStore();
 
   const handleGoogleSignIn = async () => {
@@ -33,6 +37,7 @@ export default function SignInScreen() {
 
   const handleDevLogin = async (role) => {
     setLoading('dev');
+    setAuthError('');
     try {
       const email = role === 'Admin' ? 'admin@whisk.dev' : 'user@whisk.dev';
       const res = await authApi.devLogin(email, role);
@@ -44,12 +49,62 @@ export default function SignInScreen() {
     }
   };
 
+  const handleEmailLogin = async () => {
+    if (!email.trim() || !password) {
+      setAuthError('Please enter email and password');
+      return;
+    }
+
+    setLoading('email');
+    setAuthError('');
+    try {
+      const res = await authApi.emailLogin(email.trim(), password);
+      await setAuth(res.data.token, null);
+    } catch (e) {
+      setAuthError(e.response?.data?.error || 'Invalid email or password');
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.emoji}>{'\u{1F943}'}</Text>
         <Text style={styles.title}>Whisk</Text>
         <Text style={styles.subtitle}>Your whisky journey starts here</Text>
+
+        <View style={styles.emailLoginSection}>
+          <Input
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            placeholder="you@example.com"
+            style={styles.input}
+          />
+          <Input
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            placeholder="Enter password"
+            style={styles.input}
+            error={authError}
+          />
+          <Button
+            title="Login"
+            onPress={handleEmailLogin}
+            loading={loading === 'email'}
+            style={styles.socialBtn}
+          />
+        </View>
+
+        <Text style={styles.orText}>or continue with</Text>
 
         <View style={styles.buttons}>
           <Button
@@ -87,6 +142,9 @@ const styles = StyleSheet.create({
   emoji: { fontSize: 72, marginBottom: spacing.md },
   title: { ...typography.h1, fontSize: 42, color: colors.accent, fontWeight: '800', letterSpacing: 2 },
   subtitle: { ...typography.body, color: colors.textSecondary, marginTop: spacing.sm, marginBottom: spacing.xxl },
+  emailLoginSection: { width: '100%', marginBottom: spacing.md },
+  input: { marginBottom: spacing.sm },
+  orText: { ...typography.bodySmall, color: colors.textMuted, marginBottom: spacing.md },
   buttons: { width: '100%', gap: spacing.md },
   socialBtn: { width: '100%' },
   devSection: { marginTop: spacing.xxl, width: '100%', padding: spacing.md, borderRadius: 12, borderWidth: 1, borderColor: colors.warning + '44', borderStyle: 'dashed' },

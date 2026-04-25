@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Whisk.Domain.Entities;
 using Whisk.Domain.Enums;
+using Whisk.Infrastructure.Security;
 
 namespace Whisk.Infrastructure.Persistence;
 
@@ -86,6 +87,7 @@ public static class SeedData
         adminUser.Nickname = string.IsNullOrEmpty(adminUser.Nickname) || adminUser.Nickname == "admin" ? "Admin" : adminUser.Nickname;
         adminUser.Country = string.IsNullOrEmpty(adminUser.Country) ? "Israel" : adminUser.Country;
         adminUser.Role = UserRole.Admin;
+        adminUser.PasswordHash = PasswordHasher.HashPassword("Admin123!");
         adminUser.BarrelLevel = 0;
         adminUser.HasAcceptedTerms = true;
         adminUser.IsOver18 = true;
@@ -109,6 +111,7 @@ public static class SeedData
         testUser.Nickname = string.IsNullOrEmpty(testUser.Nickname) || testUser.Nickname == "user" ? "WhiskyLover" : testUser.Nickname;
         testUser.Country = string.IsNullOrEmpty(testUser.Country) ? "Israel" : testUser.Country;
         testUser.Role = UserRole.User;
+        testUser.PasswordHash = PasswordHasher.HashPassword("User123!");
         testUser.BarrelLevel = 0;
         testUser.HasAcceptedTerms = true;
         testUser.IsOver18 = true;

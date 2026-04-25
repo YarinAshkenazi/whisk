@@ -29,6 +29,7 @@ public class WhiskDbContext : DbContext, IWhiskDbContext
 
             e.Property(u => u.Nickname).IsRequired().HasMaxLength(50);
             e.Property(u => u.Email).IsRequired().HasMaxLength(256);
+            e.Property(u => u.PasswordHash).HasMaxLength(512);
             e.Property(u => u.Country).HasMaxLength(100);
             e.Property(u => u.AuthProviderUserId).IsRequired().HasMaxLength(256);
             e.Property(u => u.Role).HasConversion<string>().HasMaxLength(20).IsRequired();
