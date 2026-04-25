@@ -106,7 +106,10 @@ public class AuthController : ControllerBase
     [HttpPost("dev-login")]
     public async Task<ActionResult<AuthResponse>> DevLogin([FromBody] DevLoginRequest request)
     {
-        if (!(_config["Environment"] == "Development" || Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development"))
+        var allowDevLogin = string.Equals(_config["AllowDevLogin"], "true", StringComparison.OrdinalIgnoreCase);
+        var isDev = _config["Environment"] == "Development"
+                    || Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+        if (!(isDev || allowDevLogin))
             return NotFound();
 
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);

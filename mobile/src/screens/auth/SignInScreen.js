@@ -43,7 +43,9 @@ export default function SignInScreen() {
       const res = await authApi.devLogin(email, role);
       await setAuth(res.data.token, null);
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Failed to connect to server. Make sure the backend is running.');
+      const msg = e.response?.data?.error
+        || (e.response ? `Server returned ${e.response.status}` : 'Failed to connect to server. Make sure the backend is running.');
+      Alert.alert('Error', msg);
     } finally {
       setLoading(null);
     }
