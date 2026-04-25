@@ -17,12 +17,14 @@ public class AuthController : ControllerBase
     private readonly IWhiskDbContext _db;
     private readonly ITokenService _tokenService;
     private readonly IConfiguration _config;
+    private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IWhiskDbContext db, ITokenService tokenService, IConfiguration config)
+    public AuthController(IWhiskDbContext db, ITokenService tokenService, IConfiguration config, ILogger<AuthController> logger)
     {
         _db = db;
         _tokenService = tokenService;
         _config = config;
+        _logger = logger;
     }
 
     [HttpPost("google")]
@@ -154,7 +156,15 @@ public class AuthController : ControllerBase
         }
 
         user.LastLoginAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync();
+        try
+        {
+            await _db.SaveChangesAsync();
+            _logger.LogInformation("Dev-login DB write succeeded for {Email}", request.Email);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Dev-login DB write failed for {Email} — returning token anyway", request.Email);
+        }
 
         var token = _tokenService.GenerateToken(user);
         return Ok(new AuthResponse(token, user.IsOnboardingComplete, user.Role.ToString()));

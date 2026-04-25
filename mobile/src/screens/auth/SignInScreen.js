@@ -36,16 +36,20 @@ export default function SignInScreen() {
   };
 
   const handleDevLogin = async (role) => {
+    console.log('[DevLogin] pressed, role =', role);
     setLoading('dev');
     setAuthError('');
     try {
-      const email = role === 'Admin' ? 'admin@whisk.dev' : 'user@whisk.dev';
-      const res = await authApi.devLogin(email, role);
+      const devEmail = role === 'Admin' ? 'admin@whisk.dev' : 'user@whisk.dev';
+      console.log('[DevLogin] calling authApi.devLogin with', devEmail, role);
+      const res = await authApi.devLogin(devEmail, role);
+      console.log('[DevLogin] success, token received');
       await setAuth(res.data.token, null);
     } catch (e) {
+      console.log('[DevLogin] CATCH:', e.message, '| code:', e.code, '| status:', e.response?.status, '| data:', JSON.stringify(e.response?.data));
       const msg = e.response?.data?.error
-        || (e.response ? `Server returned ${e.response.status}` : 'Failed to connect to server. Make sure the backend is running.');
-      Alert.alert('Error', msg);
+        || (e.response ? `Server returned ${e.response.status}` : `Network error: ${e.message}`);
+      Alert.alert('Login Error', msg);
     } finally {
       setLoading(null);
     }
