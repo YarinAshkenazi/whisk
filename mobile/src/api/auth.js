@@ -22,6 +22,7 @@ async function postJson(path, body) {
 
 export const authApi = {
   emailLogin: (email, password) => postJson('/auth/login', { email, password }),
+  emailRegister: (email, password) => postJson('/auth/register', { email, password }),
   googleLogin: (idToken) => postJson('/auth/google', { idToken }),
   appleLogin: (identityToken, fullName) => postJson('/auth/apple', { identityToken, fullName }),
   devLogin: (email, role = 'User') => postJson('/auth/dev-login', { email, role }),

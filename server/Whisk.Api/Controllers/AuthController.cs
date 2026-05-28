@@ -170,6 +170,39 @@ public class AuthController : ControllerBase
         return Ok(new AuthResponse(token, user.IsOnboardingComplete, user.Role.ToString()));
     }
 
+    [HttpPost("register")]
+    public async Task<ActionResult<AuthResponse>> Register([FromBody] EmailRegisterRequest request)
+    {
+        var email = request.Email?.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(request.Password))
+            return BadRequest(new { error = "Email and password are required" });
+
+        if (request.Password.Length < 6)
+            return BadRequest(new { error = "Password must be at least 6 characters" });
+
+        var existing = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email);
+        if (existing != null)
+            return Conflict(new { error = "An account with this email already exists" });
+
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = email,
+            PasswordHash = PasswordHasher.HashPassword(request.Password),
+            AuthProvider = AuthProvider.Email,
+            AuthProviderUserId = $"email-{email}",
+            Nickname = email.Split('@')[0],
+            IsOnboardingComplete = false,
+            IsActive = true
+        };
+        _db.Users.Add(user);
+        user.LastLoginAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        var token = _tokenService.GenerateToken(user);
+        return Ok(new AuthResponse(token, user.IsOnboardingComplete, user.Role.ToString()));
+    }
+
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponse>> Login([FromBody] EmailPasswordLoginRequest request)
     {

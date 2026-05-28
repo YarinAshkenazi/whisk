@@ -7,6 +7,7 @@ public record GoogleAuthRequest(string IdToken);
 public record AppleAuthRequest(string IdentityToken, string? FullName);
 public record DevLoginRequest(string Email, string Role);
 public record EmailPasswordLoginRequest(string Email, string Password);
+public record EmailRegisterRequest(string Email, string Password);
 public record AuthResponse(string Token, bool IsOnboardingComplete, string Role);
 
 // Profile

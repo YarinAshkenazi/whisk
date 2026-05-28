@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Alert, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, Alert, Platform, TouchableOpacity, ScrollView, KeyboardAvoidingView } from 'react-native';
 import {
   GoogleSignin,
   isErrorWithCode,
@@ -23,7 +23,9 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [authError, setAuthError] = useState('');
+  const [isRegister, setIsRegister] = useState(false);
   const { setAuth } = useAuthStore();
 
   const handleGoogleSignIn = async () => {
@@ -78,17 +80,13 @@ export default function SignInScreen() {
   };
 
   const handleDevLogin = async (role) => {
-    console.log('[DevLogin] pressed, role =', role);
     setLoading('dev');
     setAuthError('');
     try {
       const devEmail = role === 'Admin' ? 'admin@whisk.dev' : 'user@whisk.dev';
-      console.log('[DevLogin] calling authApi.devLogin with', devEmail, role);
       const res = await authApi.devLogin(devEmail, role);
-      console.log('[DevLogin] success, token received');
       await setAuth(res.data.token, null);
     } catch (e) {
-      console.log('[DevLogin] CATCH:', e.message, '| code:', e.code, '| status:', e.response?.status, '| data:', JSON.stringify(e.response?.data));
       const msg = e.response?.data?.error
         || (e.response ? `Server returned ${e.response.status}` : `Network error: ${e.message}`);
       Alert.alert('Login Error', msg);
@@ -97,101 +95,149 @@ export default function SignInScreen() {
     }
   };
 
-  const handleEmailLogin = async () => {
+  const handleEmailSubmit = async () => {
     if (!email.trim() || !password) {
       setAuthError('Please enter email and password');
       return;
     }
 
+    if (isRegister) {
+      if (password.length < 6) {
+        setAuthError('Password must be at least 6 characters');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setAuthError('Passwords do not match');
+        return;
+      }
+    }
+
     setLoading('email');
     setAuthError('');
     try {
-      const res = await authApi.emailLogin(email.trim(), password);
+      const res = isRegister
+        ? await authApi.emailRegister(email.trim(), password)
+        : await authApi.emailLogin(email.trim(), password);
       await setAuth(res.data.token, null);
     } catch (e) {
-      setAuthError(e.response?.data?.error || 'Invalid email or password');
+      setAuthError(
+        e.response?.data?.error || (isRegister ? 'Registration failed' : 'Invalid email or password')
+      );
     } finally {
       setLoading(null);
     }
   };
 
+  const toggleMode = () => {
+    setIsRegister(!isRegister);
+    setAuthError('');
+    setConfirmPassword('');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.emoji}>{'\u{1F943}'}</Text>
-        <Text style={styles.title}>Whisk</Text>
-        <Text style={styles.subtitle}>Your whisky journey starts here</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <Text style={styles.emoji}>{'\u{1F943}'}</Text>
+          <Text style={styles.title}>Whisk</Text>
+          <Text style={styles.subtitle}>Your whisky journey starts here</Text>
 
-        <View style={styles.emailLoginSection}>
-          <Input
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            placeholder="you@example.com"
-            style={styles.input}
-          />
-          <Input
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoCapitalize="none"
-            autoCorrect={false}
-            placeholder="Enter password"
-            style={styles.input}
-            error={authError}
-          />
-          <Button
-            title="Login"
-            onPress={handleEmailLogin}
-            loading={loading === 'email'}
-            style={styles.socialBtn}
-          />
-        </View>
-
-        <Text style={styles.orText}>or continue with</Text>
-
-        <View style={styles.buttons}>
-          <Button
-            title={'\u{1F310}  Sign in with Google'}
-            onPress={handleGoogleSignIn}
-            loading={loading === 'google'}
-            style={[styles.socialBtn, { backgroundColor: '#4285F4' }]}
-          />
-          {Platform.OS === 'ios' && (
-            <Button
-              title={'\u{F8FF}  Sign in with Apple'}
-              onPress={handleAppleSignIn}
-              loading={loading === 'apple'}
-              style={[styles.socialBtn, { backgroundColor: '#000' }]}
+          <View style={styles.emailSection}>
+            <Input
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="you@example.com"
+              style={styles.input}
             />
-          )}
-        </View>
-
-        {__DEV__ && (
-          <View style={styles.devSection}>
-            <Text style={styles.devLabel}>Development Only</Text>
-            <Button title="Dev Login (User)" onPress={() => handleDevLogin('User')} variant="secondary" loading={loading === 'dev'} />
-            <View style={{ height: 8 }} />
-            <Button title="Dev Login (Admin)" onPress={() => handleDevLogin('Admin')} variant="outline" loading={loading === 'dev'} />
+            <Input
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder={isRegister ? 'Create a password' : 'Enter password'}
+              style={styles.input}
+            />
+            {isRegister && (
+              <Input
+                label="Confirm Password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholder="Re-enter password"
+                style={styles.input}
+              />
+            )}
+            {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
+            <Button
+              title={isRegister ? 'Create Account' : 'Login'}
+              onPress={handleEmailSubmit}
+              loading={loading === 'email'}
+              style={styles.socialBtn}
+            />
+            <TouchableOpacity onPress={toggleMode} style={styles.toggleBtn}>
+              <Text style={styles.toggleText}>
+                {isRegister
+                  ? 'Already have an account? Log in'
+                  : "Don't have an account? Sign up"}
+              </Text>
+            </TouchableOpacity>
           </View>
-        )}
-      </View>
+
+          <Text style={styles.orText}>or continue with</Text>
+
+          <View style={styles.buttons}>
+            <Button
+              title={'\u{1F310}  Sign in with Google'}
+              onPress={handleGoogleSignIn}
+              loading={loading === 'google'}
+              style={[styles.socialBtn, { backgroundColor: '#4285F4' }]}
+            />
+            {Platform.OS === 'ios' && (
+              <Button
+                title={'\u{F8FF}  Sign in with Apple'}
+                onPress={handleAppleSignIn}
+                loading={loading === 'apple'}
+                style={[styles.socialBtn, { backgroundColor: '#000' }]}
+              />
+            )}
+          </View>
+
+          {__DEV__ && (
+            <View style={styles.devSection}>
+              <Text style={styles.devLabel}>Development Only</Text>
+              <Button title="Dev Login (User)" onPress={() => handleDevLogin('User')} variant="secondary" loading={loading === 'dev'} />
+              <View style={{ height: 8 }} />
+              <Button title="Dev Login (Admin)" onPress={() => handleDevLogin('Admin')} variant="outline" loading={loading === 'dev'} />
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xl },
+  content: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xl, paddingVertical: spacing.xl },
   emoji: { fontSize: 72, marginBottom: spacing.md },
   title: { ...typography.h1, fontSize: 42, color: colors.accent, fontWeight: '800', letterSpacing: 2 },
   subtitle: { ...typography.body, color: colors.textSecondary, marginTop: spacing.sm, marginBottom: spacing.xxl },
-  emailLoginSection: { width: '100%', marginBottom: spacing.md },
+  emailSection: { width: '100%', marginBottom: spacing.md },
   input: { marginBottom: spacing.sm },
+  errorText: { color: colors.error || '#F44336', fontSize: 13, marginBottom: spacing.sm, textAlign: 'center' },
+  toggleBtn: { marginTop: spacing.sm, alignItems: 'center' },
+  toggleText: { color: colors.accent, fontSize: 14 },
   orText: { ...typography.bodySmall, color: colors.textMuted, marginBottom: spacing.md },
   buttons: { width: '100%', gap: spacing.md },
   socialBtn: { width: '100%' },

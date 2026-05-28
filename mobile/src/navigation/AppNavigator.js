@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Notifications from 'expo-notifications';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme';
 import { useAuthStore } from '../store/authStore';
 import { useFeedbackStore } from '../store/feedbackStore';
@@ -88,12 +89,15 @@ function ProfileButton() {
 }
 
 function MainTabs() {
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 65 + insets.bottom;
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, height: 65, justifyContent: 'center', paddingTop: 6, paddingBottom: 6 },
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, height: tabBarHeight, justifyContent: 'center', paddingTop: 6, paddingBottom: 6 + insets.bottom },
         tabBarShowLabel: false,
         tabBarActiveTintColor: colors.accent,
       }}
