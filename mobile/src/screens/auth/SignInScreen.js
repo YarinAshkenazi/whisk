@@ -1,10 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Alert, Platform } from 'react-native';
+import {
+  GoogleSignin,
+  isErrorWithCode,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 import { colors, spacing, typography } from '../../theme';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import { authApi } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
+
+const GOOGLE_WEB_CLIENT_ID =
+  '355982767755-qjoe5vqcr34n0k6b21ml5bnnpr0co1n5.apps.googleusercontent.com';
+
+GoogleSignin.configure({
+  webClientId: GOOGLE_WEB_CLIENT_ID,
+  scopes: ['profile', 'email'],
+});
 
 export default function SignInScreen() {
   const [loading, setLoading] = useState(null);
@@ -15,10 +28,39 @@ export default function SignInScreen() {
 
   const handleGoogleSignIn = async () => {
     setLoading('google');
+    setAuthError('');
     try {
-      Alert.alert('Google Sign-In', 'Configure Google OAuth credentials in app.json and backend. For dev testing, use Dev Login below.');
-    } catch (e) {
-      Alert.alert('Error', e.message);
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const response = await GoogleSignin.signIn();
+      const idToken = response.data?.idToken;
+
+      if (!idToken) {
+        Alert.alert('Error', 'Failed to get Google ID token');
+        setLoading(null);
+        return;
+      }
+
+      const res = await authApi.googleLogin(idToken);
+      await setAuth(res.data.token, null);
+    } catch (error) {
+      if (isErrorWithCode(error)) {
+        switch (error.code) {
+          case statusCodes.SIGN_IN_CANCELLED:
+            break;
+          case statusCodes.IN_PROGRESS:
+            break;
+          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+            Alert.alert('Error', 'Google Play Services is not available on this device');
+            break;
+          default:
+            Alert.alert('Google Sign-In Error', error.message);
+        }
+      } else {
+        const msg =
+          error.response?.data?.error ||
+          (error.response ? `Server returned ${error.response.status}` : error.message);
+        Alert.alert('Login Error', msg);
+      }
     } finally {
       setLoading(null);
     }
