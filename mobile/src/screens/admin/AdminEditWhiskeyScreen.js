@@ -108,7 +108,8 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
       playSuccess();
     } catch (e) {
       playError();
-      Alert.alert('AI Fill Failed', e.response?.data?.error || 'Could not generate details. Please fill the form manually.');
+      const msg = e.response?.data?.error || e.response?.data?.title || e.message || 'Could not generate details. Please fill the form manually.';
+      Alert.alert('AI Fill Failed', msg);
     } finally {
       setAiFilling(false);
     }
