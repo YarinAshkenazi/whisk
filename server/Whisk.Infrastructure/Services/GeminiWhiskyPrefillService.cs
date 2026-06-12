@@ -33,7 +33,7 @@ public class GeminiWhiskyPrefillService : IGeminiPrefillService
         var categories = string.Join(", ", categoryNames);
         var brandHint = string.IsNullOrWhiteSpace(brand) ? "unknown" : brand;
 
-        var prompt = $"""
+        var prompt = $$"""
             You are helping fill a whisky catalog form for a mobile whisky app.
             Return only valid JSON that matches the schema below.
             All text fields must be in English.
@@ -42,20 +42,20 @@ public class GeminiWhiskyPrefillService : IGeminiPrefillService
             If you are uncertain about a field, use null.
             Do not invent fake data — use known whisky catalog information.
 
-            The whisky bottle to look up: {bottleName}
-            Brand (if known): {brandHint}
+            The whisky bottle to look up: {{bottleName}}
+            Brand (if known): {{brandHint}}
 
-            Available categories (use the exact name): {categories}
+            Available categories (use the exact name): {{categories}}
 
             Return a JSON object with exactly these fields:
-            {{
+            {
               "name": "string - full official bottle name",
               "brand": "string - brand or producer name",
               "age": number or null - age statement in years (null if NAS / no age statement),
               "country": "string - country of origin (e.g. Scotland, Japan, Ireland, USA)",
               "region": "string - whisky region (e.g. Speyside, Islay, Highland, Lowland, Campbeltown)",
               "distillery": "string - distillery name",
-              "categoryName": "string - must be one of: {categories}",
+              "categoryName": "string - must be one of: {{categories}}",
               "volumeML": number - standard bottle volume in milliliters (usually 700),
               "alcoholPercentage": number - ABV as a percentage (e.g. 40.0, 46.0),
               "description": "string - 2-3 sentence English description of the whisky character, nose, palate and finish",
@@ -65,7 +65,7 @@ public class GeminiWhiskyPrefillService : IGeminiPrefillService
               "alcoholProfile": number 0-10 or null - perceived alcohol heat (null to auto-calculate from ABV),
               "minMarketPriceIls": number - minimum market price in Israeli Shekels,
               "maxMarketPriceIls": number - maximum market price in Israeli Shekels
-            }}
+            }
             """;
 
         var result = await CallGeminiAsync(prompt);
