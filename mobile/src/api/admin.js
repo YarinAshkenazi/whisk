@@ -26,5 +26,5 @@ export const adminApi = {
   approveRequest: (id) => apiClient.put(`/admin/whiskey-requests/${id}/approve`),
   rejectRequest: (id) => apiClient.put(`/admin/whiskey-requests/${id}/reject`),
   updateMarketPrices: (id, data) => apiClient.put(`/admin/whiskies/${id}/market-prices`, data),
-  aiPrefill: (data) => apiClient.post('/admin/whiskies/ai-prefill', data),
+  aiPrefill: (data, config) => apiClient.post('/admin/whiskies/ai-prefill', data, { timeout: 45000, ...config }),
 };

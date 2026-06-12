@@ -9,8 +9,8 @@ namespace Whisk.Infrastructure.Services;
 
 public class GeminiWhiskyPrefillService : IGeminiPrefillService
 {
-    private static readonly HttpClient Http = new();
-    private readonly string? _apiKey;
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(30) };
+    private readonly IConfiguration _configuration;
     private readonly ILogger<GeminiWhiskyPrefillService> _logger;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -21,14 +21,18 @@ public class GeminiWhiskyPrefillService : IGeminiPrefillService
 
     public GeminiWhiskyPrefillService(IConfiguration configuration, ILogger<GeminiWhiskyPrefillService> logger)
     {
-        _apiKey = configuration["GEMINI_API_KEY"];
+        _configuration = configuration;
         _logger = logger;
     }
 
     public async Task<GeminiWhiskyResult?> PrefillWhiskyAsync(string bottleName, string? brand, List<string> categoryNames)
     {
-        if (string.IsNullOrWhiteSpace(_apiKey))
+        var apiKey = _configuration["GEMINI_API_KEY"];
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            _logger.LogError("GEMINI_API_KEY is not found in configuration");
             throw new InvalidOperationException("GEMINI_API_KEY is not configured");
+        }
 
         var categories = string.Join(", ", categoryNames);
         var brandHint = string.IsNullOrWhiteSpace(brand) ? "unknown" : brand;
@@ -68,16 +72,16 @@ public class GeminiWhiskyPrefillService : IGeminiPrefillService
             }
             """;
 
-        var result = await CallGeminiAsync(prompt);
+        var result = await CallGeminiAsync(prompt, apiKey);
         if (result != null) return result;
 
         _logger.LogWarning("First Gemini attempt returned invalid response, retrying once");
-        return await CallGeminiAsync(prompt);
+        return await CallGeminiAsync(prompt, apiKey);
     }
 
-    private async Task<GeminiWhiskyResult?> CallGeminiAsync(string prompt)
+    private async Task<GeminiWhiskyResult?> CallGeminiAsync(string prompt, string apiKey)
     {
-        var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={_apiKey}";
+        var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}";
 
         var requestBody = new
         {

@@ -84,7 +84,7 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
     if (!form.name.trim()) return Alert.alert('Name required', 'Enter a bottle name before using AI Fill.');
     setAiFilling(true);
     try {
-      const res = await adminApi.aiPrefill({ bottleName: form.name.trim(), brand: form.brand.trim() || null });
+      const res = await adminApi.aiPrefill({ bottleName: form.name.trim(), brand: form.brand.trim() || null }, { timeout: 45000 });
       const ai = res.data;
       setForm(prev => ({
         ...prev,
