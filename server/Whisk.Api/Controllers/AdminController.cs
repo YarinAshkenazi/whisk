@@ -170,8 +170,13 @@ public class AdminController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            _logger.LogError(ex, "Gemini configuration error");
-            return StatusCode(503, new { error = "AI service is not configured" });
+            _logger.LogError(ex, "Gemini service error");
+            return StatusCode(502, new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during AI prefill");
+            return StatusCode(500, new { error = $"Unexpected error: {ex.Message}" });
         }
 
         if (result == null)

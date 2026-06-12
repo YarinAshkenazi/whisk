@@ -101,8 +101,8 @@ public class GeminiWhiskyPrefillService : IGeminiPrefillService
             if (!response.IsSuccessStatusCode)
             {
                 var errorBody = await response.Content.ReadAsStringAsync();
-                _logger.LogWarning("Gemini API returned {Status}: {Body}", response.StatusCode, errorBody);
-                return null;
+                _logger.LogError("Gemini API returned {Status}: {Body}", response.StatusCode, errorBody);
+                throw new InvalidOperationException($"Gemini API error ({response.StatusCode}): {errorBody}");
             }
 
             var json = await response.Content.ReadFromJsonAsync<JsonElement>();
