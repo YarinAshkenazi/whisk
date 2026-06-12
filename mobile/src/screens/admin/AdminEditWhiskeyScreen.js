@@ -42,6 +42,7 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
 
   const [localImageUri, setLocalImageUri] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [aiFilling, setAiFilling] = useState(false);
 
   const setField = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
@@ -77,6 +78,40 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
       { text: 'Gallery', onPress: () => pickImage(false) },
       { text: 'Cancel', style: 'cancel' },
     ]);
+  };
+
+  const handleAiFill = async () => {
+    if (!form.name.trim()) return Alert.alert('Name required', 'Enter a bottle name before using AI Fill.');
+    setAiFilling(true);
+    try {
+      const res = await adminApi.aiPrefill({ bottleName: form.name.trim(), brand: form.brand.trim() || null });
+      const ai = res.data;
+      setForm(prev => ({
+        ...prev,
+        name: ai.name || prev.name,
+        brand: ai.brand || prev.brand,
+        age: ai.age != null ? String(ai.age) : '',
+        country: ai.country || prev.country,
+        region: ai.region || prev.region,
+        distillery: ai.distillery || prev.distillery,
+        categoryId: ai.categoryId || prev.categoryId,
+        volumeML: ai.volumeML ? String(ai.volumeML) : prev.volumeML,
+        alcoholPercentage: ai.alcoholPercentage ? String(ai.alcoholPercentage) : prev.alcoholPercentage,
+        description: ai.description || prev.description,
+        bodyProfile: ai.bodyProfile != null ? String(ai.bodyProfile) : prev.bodyProfile,
+        smokinessProfile: ai.smokinessProfile != null ? String(ai.smokinessProfile) : prev.smokinessProfile,
+        sweetnessProfile: ai.sweetnessProfile != null ? String(ai.sweetnessProfile) : prev.sweetnessProfile,
+        alcoholProfile: ai.alcoholProfile != null ? String(ai.alcoholProfile) : prev.alcoholProfile,
+        minMarketPriceIls: ai.minMarketPriceIls ? String(ai.minMarketPriceIls) : prev.minMarketPriceIls,
+        maxMarketPriceIls: ai.maxMarketPriceIls ? String(ai.maxMarketPriceIls) : prev.maxMarketPriceIls,
+      }));
+      playSuccess();
+    } catch (e) {
+      playError();
+      Alert.alert('AI Fill Failed', e.response?.data?.error || 'Could not generate details. Please fill the form manually.');
+    } finally {
+      setAiFilling(false);
+    }
   };
 
   const displayImageUri = localImageUri || getWhiskeyImageUrl(form.imageUrl);
@@ -131,6 +166,18 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
     <SafeScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Input label="Name" value={form.name} onChangeText={v => setField('name', v)} />
       <Input label="Brand" value={form.brand} onChangeText={v => setField('brand', v)} />
+
+      {!isEdit && (
+        <TouchableOpacity style={[styles.aiBtn, aiFilling && styles.aiBtnDisabled]} onPress={handleAiFill} disabled={aiFilling} activeOpacity={0.7}>
+          {aiFilling ? (
+            <ActivityIndicator color={colors.accent} size="small" style={{ marginRight: 8 }} />
+          ) : (
+            <Text style={styles.aiIcon}>{'\u2728'}</Text>
+          )}
+          <Text style={styles.aiBtnText}>{aiFilling ? 'Generating...' : 'AI Fill'}</Text>
+        </TouchableOpacity>
+      )}
+
       <Input label="Age (optional)" value={form.age} onChangeText={v => setField('age', v)} keyboardType="numeric" />
       <Input label="Country" value={form.country} onChangeText={v => setField('country', v)} />
       <Input label="Region" value={form.region} onChangeText={v => setField('region', v)} />
@@ -208,4 +255,8 @@ const styles = StyleSheet.create({
   imagePlaceholderText: { color: colors.textMuted, fontSize: 14 },
   uploadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' },
   uploadingText: { color: '#FFF', marginTop: 8, fontSize: 14 },
+  aiBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.accent, borderRadius: 12, paddingVertical: 10, marginBottom: spacing.md },
+  aiBtnDisabled: { opacity: 0.6 },
+  aiIcon: { fontSize: 18, marginRight: 8 },
+  aiBtnText: { color: colors.accent, fontSize: 15, fontWeight: '600' },
 });

@@ -27,6 +27,7 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IRecommendationService, RecommendationService>();
         services.AddSingleton<IPushNotificationService, ExpoPushService>();
+        services.AddSingleton<IGeminiPrefillService, GeminiWhiskyPrefillService>();
 
         return services;
     }

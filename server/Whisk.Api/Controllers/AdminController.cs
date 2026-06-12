@@ -152,6 +152,46 @@ public class AdminController : ControllerBase
         return CreatedAtAction(nameof(GetWhiskies), null, new AdminWhiskeyDto(whiskey.Id, whiskey.Name, whiskey.Brand, whiskey.Age, whiskey.Country, whiskey.Region, whiskey.Distillery, whiskey.CategoryId, cat.Name, whiskey.VolumeML, whiskey.AlcoholPercentage, whiskey.ImageUrl, whiskey.Description, whiskey.BodyProfile, whiskey.SmokinessProfile, whiskey.SweetnessProfile, whiskey.AlcoholProfile, whiskey.MinMarketPriceIls, whiskey.MaxMarketPriceIls, whiskey.IsActive, whiskey.CreatedAt, whiskey.UpdatedAt));
     }
 
+    [HttpPost("whiskies/ai-prefill")]
+    public async Task<ActionResult<AiPrefillResponse>> AiPrefill([FromBody] AiPrefillRequest request, [FromServices] IGeminiPrefillService gemini)
+    {
+        if (string.IsNullOrWhiteSpace(request.BottleName))
+            return BadRequest(new { error = "Bottle name is required" });
+
+        var categoryNames = await _db.WhiskeyCategories
+            .Where(c => c.IsActive)
+            .Select(c => c.Name)
+            .ToListAsync();
+
+        GeminiWhiskyResult? result;
+        try
+        {
+            result = await gemini.PrefillWhiskyAsync(request.BottleName, request.Brand, categoryNames);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(ex, "Gemini configuration error");
+            return StatusCode(503, new { error = "AI service is not configured" });
+        }
+
+        if (result == null)
+            return StatusCode(502, new { error = "AI could not generate whisky details. Please fill the form manually." });
+
+        var categoryId = 1;
+        if (!string.IsNullOrWhiteSpace(result.CategoryName))
+        {
+            var cat = await _db.WhiskeyCategories
+                .FirstOrDefaultAsync(c => c.IsActive && c.Name.ToLower() == result.CategoryName.ToLower());
+            if (cat != null) categoryId = cat.Id;
+        }
+
+        return Ok(new AiPrefillResponse(
+            result.Name, result.Brand, result.Age, result.Country, result.Region, result.Distillery,
+            categoryId, result.VolumeML, result.AlcoholPercentage, result.Description,
+            result.BodyProfile, result.SmokinessProfile, result.SweetnessProfile, result.AlcoholProfile,
+            result.MinMarketPriceIls, result.MaxMarketPriceIls));
+    }
+
     [HttpPut("whiskies/{id}")]
     public async Task<ActionResult<AdminWhiskeyDto>> UpdateWhiskey(Guid id, [FromBody] UpdateWhiskeyRequest request, [FromServices] IValidator<UpdateWhiskeyRequest> validator)
     {

@@ -54,3 +54,7 @@ public record UpdateUserStatusRequest(bool IsActive);
 public record UpdateUserRoleRequest(string Role);
 public record UpdateWhiskeyStatusRequest(bool IsActive);
 public record RegisterPushTokenRequest(string Token);
+
+// AI Prefill
+public record AiPrefillRequest(string BottleName, string? Brand);
+public record AiPrefillResponse(string Name, string Brand, int? Age, string Country, string Region, string Distillery, int CategoryId, int VolumeML, double AlcoholPercentage, string Description, double BodyProfile, double SmokinessProfile, double SweetnessProfile, double? AlcoholProfile, decimal MinMarketPriceIls, decimal MaxMarketPriceIls);

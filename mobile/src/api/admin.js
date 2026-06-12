@@ -26,4 +26,5 @@ export const adminApi = {
   approveRequest: (id) => apiClient.put(`/admin/whiskey-requests/${id}/approve`),
   rejectRequest: (id) => apiClient.put(`/admin/whiskey-requests/${id}/reject`),
   updateMarketPrices: (id, data) => apiClient.put(`/admin/whiskies/${id}/market-prices`, data),
+  aiPrefill: (data) => apiClient.post('/admin/whiskies/ai-prefill', data),
 };
