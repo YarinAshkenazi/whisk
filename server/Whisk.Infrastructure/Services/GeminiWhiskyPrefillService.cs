@@ -81,7 +81,7 @@ public class GeminiWhiskyPrefillService : IGeminiPrefillService
 
     private async Task<GeminiWhiskyResult?> CallGeminiAsync(string prompt, string apiKey)
     {
-        var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}";
+        var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={apiKey}";
 
         var requestBody = new
         {
