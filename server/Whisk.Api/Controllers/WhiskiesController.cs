@@ -55,12 +55,11 @@ public class WhiskiesController : ControllerBase
         var pageSize = Math.Clamp(request.PageSize, 1, 50);
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
-        var dtos = new List<WhiskeyDto>();
-        foreach (var w in items)
-        {
-            var match = await _recommendations.GetBottleMatchAsync(userId, w.Id);
-            dtos.Add(MapWhiskey(w, match));
-        }
+        var matchDict = await _recommendations.GetBatchBottleMatchesAsync(
+            userId, items.Select(w => w.Id).ToList());
+
+        var dtos = items.Select(w =>
+            MapWhiskey(w, matchDict.GetValueOrDefault(w.Id))).ToList();
 
         if (request.SortBy?.ToLower() == "match")
         {

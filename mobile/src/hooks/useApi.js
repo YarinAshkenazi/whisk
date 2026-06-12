@@ -71,7 +71,12 @@ export const useAddTasting = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data) => tastingsApi.addTasting(data).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tastings'] }); qc.invalidateQueries({ queryKey: ['recommendations'] }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tastings'] });
+      qc.invalidateQueries({ queryKey: ['recommendations'] });
+      qc.invalidateQueries({ queryKey: ['recStatus'] });
+      qc.invalidateQueries({ queryKey: ['whiskies'] });
+    },
   });
 };
 
@@ -79,7 +84,12 @@ export const useUpdateTasting = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }) => tastingsApi.updateTasting(id, data).then(r => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tastings'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tastings'] });
+      qc.invalidateQueries({ queryKey: ['recommendations'] });
+      qc.invalidateQueries({ queryKey: ['recStatus'] });
+      qc.invalidateQueries({ queryKey: ['whiskies'] });
+    },
   });
 };
 
@@ -87,7 +97,12 @@ export const useDeleteTasting = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id) => tastingsApi.deleteTasting(id).then(r => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tastings'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tastings'] });
+      qc.invalidateQueries({ queryKey: ['recommendations'] });
+      qc.invalidateQueries({ queryKey: ['recStatus'] });
+      qc.invalidateQueries({ queryKey: ['whiskies'] });
+    },
   });
 };
 
