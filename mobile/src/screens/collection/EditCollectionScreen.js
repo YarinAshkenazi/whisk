@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Alert, Text, View } from 'react-native';
+import { StyleSheet, Alert, Text, View } from 'react-native';
+import SafeScrollView from '../../components/SafeScrollView';
 import { colors, spacing, typography } from '../../theme';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
@@ -36,7 +37,7 @@ export default function EditCollectionScreen({ navigation, route }) {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <SafeScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>{item.whiskeyName}</Text>
       <Input label="Purchase Price (ILS)" value={price} onChangeText={setPrice} keyboardType="numeric" />
       <Text style={styles.label}>Status</Text>
@@ -48,7 +49,7 @@ export default function EditCollectionScreen({ navigation, route }) {
       <Input label="Notes" value={notes} onChangeText={setNotes} multiline numberOfLines={3} />
       <Button title="Save Changes" onPress={handleSave} loading={updateMutation.isPending} />
       <Button title="Remove from Collection" onPress={handleDelete} variant="danger" style={{ marginTop: spacing.sm }} />
-    </ScrollView>
+    </SafeScrollView>
   );
 }
 

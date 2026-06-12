@@ -24,14 +24,15 @@ export default function MarketScreen({ navigation }) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState('name');
+  const [sortDesc, setSortDesc] = useState(false);
   const [filters, setFilters] = useState({});
   const [allItems, setAllItems] = useState([]);
   const totalCountRef = useRef(0);
   const loadingPageRef = useRef(false);
 
   const params = useMemo(
-    () => ({ search, page, pageSize: PAGE_SIZE, sortBy, sortDesc: false, ...filters }),
-    [search, page, sortBy, filters],
+    () => ({ search, page, pageSize: PAGE_SIZE, sortBy, sortDesc, ...filters }),
+    [search, page, sortBy, sortDesc, filters],
   );
   const { data, isLoading, isFetching, refetch } = useWhiskies(params);
   const { data: recs } = useRecommendations();
@@ -57,11 +58,20 @@ export default function MarketScreen({ navigation }) {
   const handleSearch = useCallback((t) => {
     setSearch(t);
     setPage(1);
+    setAllItems([]);
   }, []);
 
   const handleSort = useCallback((s) => {
-    setSortBy(s);
+    setSortBy(prev => {
+      if (prev === s) {
+        setSortDesc(d => !d);
+        return prev;
+      }
+      setSortDesc(false);
+      return s;
+    });
     setPage(1);
+    setAllItems([]);
   }, []);
 
   const handleEndReached = useCallback(() => {
@@ -74,6 +84,7 @@ export default function MarketScreen({ navigation }) {
 
   const handleRefresh = useCallback(() => {
     setPage(1);
+    setAllItems([]);
     refetch();
   }, [refetch]);
 
@@ -130,7 +141,9 @@ export default function MarketScreen({ navigation }) {
       <View style={styles.sortRow}>
         {SORT_OPTIONS.map(s => (
           <TouchableOpacity key={s} onPress={() => handleSort(s)} style={[styles.sortChip, sortBy === s && styles.sortChipActive]}>
-            <Text style={[styles.sortText, sortBy === s && styles.sortTextActive]}>{s.charAt(0).toUpperCase() + s.slice(1)}</Text>
+            <Text style={[styles.sortText, sortBy === s && styles.sortTextActive]}>
+              {s.charAt(0).toUpperCase() + s.slice(1)}{sortBy === s ? (sortDesc ? ' \u2193' : ' \u2191') : ''}
+            </Text>
           </TouchableOpacity>
         ))}
         <TouchableOpacity style={styles.requestBtn} onPress={() => navigation.navigate('RequestBottle')}>

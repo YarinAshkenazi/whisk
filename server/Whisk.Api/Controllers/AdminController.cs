@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Whisk.Application.DTOs;
 using Whisk.Application.Interfaces;
 using Whisk.Domain.Entities;
@@ -16,15 +17,17 @@ public class AdminController : ControllerBase
 {
     private readonly IWhiskDbContext _db;
     private readonly IWebHostEnvironment _env;
+    private readonly ILogger<AdminController> _logger;
 
     private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
         { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
     private const long MaxImageSize = 10 * 1024 * 1024; // 10 MB
 
-    public AdminController(IWhiskDbContext db, IWebHostEnvironment env)
+    public AdminController(IWhiskDbContext db, IWebHostEnvironment env, ILogger<AdminController> logger)
     {
         _db = db;
         _env = env;
+        _logger = logger;
     }
 
     [HttpGet("dashboard")]
@@ -119,20 +122,25 @@ public class AdminController : ControllerBase
 
             await _db.SaveChangesAsync();
 
-            if (whiskeyRequest?.User != null
-                && !string.IsNullOrEmpty(whiskeyRequest.User.ExpoPushToken)
-                && whiskeyRequest.NotificationSentAt == null)
+            if (whiskeyRequest?.User != null && whiskeyRequest.NotificationSentAt == null)
             {
-                var sent = await pushService.SendAsync(
-                    whiskeyRequest.User.ExpoPushToken,
-                    "Your whiskey request was approved!",
-                    $"{whiskey.Name} by {whiskey.Brand} is now available in Whisk.",
-                    new { type = "request_approved", whiskeyId = whiskey.Id.ToString(), requestId = whiskeyRequest.Id.ToString() });
-
-                if (sent)
+                if (string.IsNullOrEmpty(whiskeyRequest.User.ExpoPushToken))
                 {
-                    whiskeyRequest.NotificationSentAt = DateTime.UtcNow;
-                    await _db.SaveChangesAsync();
+                    _logger.LogWarning("Requester {UserId} has no push token; skipping notification for request {RequestId}", whiskeyRequest.UserId, whiskeyRequest.Id);
+                }
+                else
+                {
+                    var sent = await pushService.SendAsync(
+                        whiskeyRequest.User.ExpoPushToken,
+                        "Whisky Request Approved",
+                        $"Your request for {whiskey.Name} was approved. The whisky is now available in the Market.",
+                        new { type = "whisky_request_approved", requestId = whiskeyRequest.Id.ToString(), whiskeyId = whiskey.Id.ToString(), whiskyName = whiskey.Name });
+
+                    if (sent)
+                    {
+                        whiskeyRequest.NotificationSentAt = DateTime.UtcNow;
+                        await _db.SaveChangesAsync();
+                    }
                 }
             }
         }

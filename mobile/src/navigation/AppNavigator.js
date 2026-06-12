@@ -140,7 +140,7 @@ export default function AppNavigator() {
   useEffect(() => {
     notificationResponseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
       const data = response.notification.request.content.data;
-      if (data?.type === 'request_approved' && data?.whiskeyId && navigationRef.current) {
+      if (data?.type === 'whisky_request_approved' && data?.whiskeyId && navigationRef.current) {
         navigationRef.current.navigate('BottleDetail', { id: data.whiskeyId });
       }
     });

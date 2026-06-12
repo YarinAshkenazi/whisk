@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, Alert, Switch } from 'react-native';
+import SafeScrollView from '../../components/SafeScrollView';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import Button from '../../components/Button';
 import Card from '../../components/Card';
@@ -38,7 +39,7 @@ export default function ProfileScreen({ navigation }) {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <SafeScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Text style={styles.avatar}>{'\u{1F464}'}</Text>
         <Text style={styles.name}>{profile?.nickname}</Text>
@@ -102,7 +103,7 @@ export default function ProfileScreen({ navigation }) {
         <Button title="Sign Out" onPress={logout} variant="outline" />
         <Button title="Delete Account" onPress={handleDeleteAccount} variant="danger" style={{ marginTop: spacing.sm }} />
       </View>
-    </ScrollView>
+    </SafeScrollView>
   );
 }
 

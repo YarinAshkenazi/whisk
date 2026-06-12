@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Alert, Text } from 'react-native';
+import { StyleSheet, Alert, Text } from 'react-native';
 import { colors, spacing, typography } from '../../theme';
 import Button from '../../components/Button';
 import DeltaSlider from '../../components/DeltaSlider';
 import Input from '../../components/Input';
+import SafeScrollView from '../../components/SafeScrollView';
 import { useAddTasting } from '../../hooks/useApi';
 import { useFeedback } from '../../utils/feedback';
 
@@ -35,7 +36,7 @@ export default function AddTastingScreen({ navigation, route }) {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <SafeScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>{whiskeyName}</Text>
       <Text style={styles.subtitle}>Rate how this bottle matches your taste</Text>
 
@@ -47,7 +48,7 @@ export default function AddTastingScreen({ navigation, route }) {
       <Input label="Notes (optional)" value={notes} onChangeText={setNotes} placeholder="Your impressions..." multiline numberOfLines={3} />
 
       <Button title="Save Tasting" onPress={handleSave} loading={mutation.isPending} />
-    </ScrollView>
+    </SafeScrollView>
   );
 }
 

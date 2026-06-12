@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import SafeScrollView from '../../components/SafeScrollView';
 import { colors, spacing, typography } from '../../theme';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
@@ -29,7 +30,7 @@ export default function FilterScreen({ navigation, route }) {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <SafeScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.section}>Category</Text>
       <View style={styles.chips}>
         {categories?.map(c => (
@@ -45,7 +46,7 @@ export default function FilterScreen({ navigation, route }) {
       </View>
       <Button title="Apply Filters" onPress={apply} />
       <Button title="Clear All" onPress={clear} variant="outline" style={{ marginTop: spacing.sm }} />
-    </ScrollView>
+    </SafeScrollView>
   );
 }
 

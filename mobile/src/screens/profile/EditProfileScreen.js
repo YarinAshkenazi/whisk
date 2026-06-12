@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
+import SafeScrollView from '../../components/SafeScrollView';
 import { colors, spacing } from '../../theme';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
@@ -22,12 +23,12 @@ export default function EditProfileScreen({ navigation, route }) {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <SafeScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Input label="Nickname" value={nickname} onChangeText={setNickname} />
       <Input label="Country" value={country} onChangeText={setCountry} />
       <Input label="Email" value={profile?.email || ''} editable={false} style={{ opacity: 0.5 }} />
       <Button title="Save Changes" onPress={handleSave} loading={mutation.isPending} />
-    </ScrollView>
+    </SafeScrollView>
   );
 }
 

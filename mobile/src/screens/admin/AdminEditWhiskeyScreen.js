@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Alert, Text, View, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { StyleSheet, Alert, Text, View, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import SafeScrollView from '../../components/SafeScrollView';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, spacing, typography } from '../../theme';
 import Button from '../../components/Button';
@@ -127,7 +128,7 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <SafeScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Input label="Name" value={form.name} onChangeText={v => setField('name', v)} />
       <Input label="Brand" value={form.brand} onChangeText={v => setField('brand', v)} />
       <Input label="Age (optional)" value={form.age} onChangeText={v => setField('age', v)} keyboardType="numeric" />
@@ -186,13 +187,13 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
       </View>
 
       <Button title={uploading ? 'Uploading...' : (isEdit ? 'Save Changes' : 'Create Whiskey')} onPress={handleSave} disabled={uploading} style={{ marginTop: spacing.md }} />
-    </ScrollView>
+    </SafeScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  content: { padding: spacing.lg },
   label: { color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: spacing.xs },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: spacing.lg },
   chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },

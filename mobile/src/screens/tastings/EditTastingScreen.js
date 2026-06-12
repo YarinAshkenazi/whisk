@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Alert, Text } from 'react-native';
+import { StyleSheet, Alert, Text } from 'react-native';
 import { colors, spacing, typography } from '../../theme';
 import Button from '../../components/Button';
 import DeltaSlider from '../../components/DeltaSlider';
 import Input from '../../components/Input';
+import SafeScrollView from '../../components/SafeScrollView';
 import { useUpdateTasting, useDeleteTasting } from '../../hooks/useApi';
 import { useFeedback } from '../../utils/feedback';
 
@@ -43,7 +44,7 @@ export default function EditTastingScreen({ navigation, route }) {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <SafeScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>{tasting.whiskeyName}</Text>
       <Text style={styles.date}>{new Date(tasting.tastingDate).toLocaleDateString()}</Text>
       <Text style={styles.fit}>Current Fit: {tasting.personalFitPercent}%</Text>
@@ -57,7 +58,7 @@ export default function EditTastingScreen({ navigation, route }) {
 
       <Button title="Save Changes" onPress={handleSave} loading={updateMutation.isPending} />
       <Button title="Delete Tasting" onPress={handleDelete} variant="danger" style={{ marginTop: spacing.sm }} />
-    </ScrollView>
+    </SafeScrollView>
   );
 }
 

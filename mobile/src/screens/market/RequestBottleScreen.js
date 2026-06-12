@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
+import SafeScrollView from '../../components/SafeScrollView';
 import { colors, spacing } from '../../theme';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
@@ -23,12 +24,12 @@ export default function RequestBottleScreen({ navigation }) {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <SafeScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Input label="Whiskey Name" value={name} onChangeText={setName} placeholder="e.g., Springbank 15" />
       <Input label="Brand" value={brand} onChangeText={setBrand} placeholder="e.g., Springbank" />
       <Input label="Additional Details (optional)" value={details} onChangeText={setDetails} placeholder="Anything that helps identify it" multiline numberOfLines={3} />
       <Button title="Submit Request" onPress={handleSubmit} loading={mutation.isPending} />
-    </ScrollView>
+    </SafeScrollView>
   );
 }
 

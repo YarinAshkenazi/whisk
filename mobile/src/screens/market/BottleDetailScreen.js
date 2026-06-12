@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
+import SafeScrollView from '../../components/SafeScrollView';
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import { getWhiskeyImageUrl } from '../../constants';
 import Button from '../../components/Button';
@@ -25,7 +26,7 @@ export default function BottleDetailScreen({ route, navigation }) {
   if (isLoading || !w) return <LoadingScreen />;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <SafeScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Image source={getWhiskeyImageUrl(w.imageUrl) ? { uri: getWhiskeyImageUrl(w.imageUrl) } : undefined} style={styles.image} />
 
       <View style={styles.header}>
@@ -66,7 +67,7 @@ export default function BottleDetailScreen({ route, navigation }) {
         <Button title="Add Tasting" onPress={() => navigation.navigate('AddTasting', { whiskeyId: w.id, whiskeyName: w.name })} />
         <Button title="Add to Collection" onPress={() => navigation.navigate('AddCollection', { whiskeyId: w.id, whiskeyName: w.name })} variant="secondary" style={{ marginTop: spacing.sm }} />
       </View>
-    </ScrollView>
+    </SafeScrollView>
   );
 }
 
@@ -81,7 +82,7 @@ function MetaItem({ label, value }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { paddingBottom: spacing.xxl },
+  content: {},
   image: { width: '100%', height: 250, backgroundColor: colors.surface },
   header: { flexDirection: 'row', alignItems: 'flex-start', padding: spacing.lg },
   name: { ...typography.h2, marginBottom: 4 },

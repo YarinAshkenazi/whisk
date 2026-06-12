@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Switch, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Switch, Alert, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import SafeScrollView from '../../components/SafeScrollView';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
@@ -34,7 +36,7 @@ export default function OnboardingScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <SafeScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.emoji}>{'\u{1F943}'}</Text>
         <Text style={styles.title}>Welcome to Whisk</Text>
         <Text style={styles.subtitle}>Complete your profile to get started</Text>
@@ -57,7 +59,7 @@ export default function OnboardingScreen() {
         <TouchableOpacity onPress={logout} style={styles.signOutLink}>
           <Text style={styles.signOutText}>Sign out and start over</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </SafeScrollView>
     </SafeAreaView>
   );
 }

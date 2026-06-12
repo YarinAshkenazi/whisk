@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Alert, Platform, TouchableOpacity, ScrollView, KeyboardAvoidingView } from 'react-native';
+import { View, Text, StyleSheet, Alert, Platform, TouchableOpacity, KeyboardAvoidingView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import SafeScrollView from '../../components/SafeScrollView';
 import {
   GoogleSignin,
   isErrorWithCode,
@@ -140,7 +142,7 @@ export default function SignInScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <SafeScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Text style={styles.emoji}>{'\u{1F943}'}</Text>
           <Text style={styles.title}>Whisk</Text>
           <Text style={styles.subtitle}>Your whisky journey starts here</Text>
@@ -221,7 +223,7 @@ export default function SignInScreen() {
               <Button title="Dev Login (Admin)" onPress={() => handleDevLogin('Admin')} variant="outline" loading={loading === 'dev'} />
             </View>
           )}
-        </ScrollView>
+        </SafeScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
