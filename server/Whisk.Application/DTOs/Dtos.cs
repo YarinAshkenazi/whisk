@@ -41,7 +41,21 @@ public record WhiskeyRequestDto(Guid Id, string Name, string Brand, string? Deta
 public record CreateWhiskeyRequestDto(string Name, string Brand, string? Details);
 
 // Admin
-public record AdminDashboardDto(int TotalUsers, int ActiveUsers, int TotalWhiskies, int TotalTastings, int TotalCollectionItems, int PendingRequests, double? F1Score, int? F1SampleSize);
+public record AdminDashboardDto(int TotalUsers, int ActiveUsers, int TotalWhiskies, int TotalTastings, int TotalCollectionItems, int PendingRequests, F1MetricsDto F1Metrics);
+
+public record F1MetricsDto(
+    double? F1Score,
+    double? Precision,
+    double? Recall,
+    int TruePositives,
+    int FalsePositives,
+    int FalseNegatives,
+    int TrueNegatives,
+    int EvaluatedSamples,
+    int MinimumSamplesRequired,
+    int PositivePredictionThreshold,
+    int PositiveFeedbackThreshold,
+    DateTime? LastUpdated);
 public record AdminUserDto(Guid Id, string Nickname, string Email, string Country, string Role, int BarrelLevel, bool IsActive, DateTime CreatedAt, DateTime? LastLoginAt, int TastingCount, int CollectionCount);
 public record AdminWhiskeyDto(Guid Id, string Name, string Brand, int? Age, string Country, string Region, string Distillery, int CategoryId, string CategoryName, int VolumeML, double AlcoholPercentage, string ImageUrl, string Description, double BodyProfile, double SmokinessProfile, double SweetnessProfile, double? AlcoholProfile, decimal MinMarketPriceIls, decimal MaxMarketPriceIls, bool IsActive, DateTime CreatedAt, DateTime UpdatedAt);
 public record CreateWhiskeyRequest(string Name, string Brand, int? Age, string Country, string Region, string Distillery, int CategoryId, int VolumeML, double AlcoholPercentage, string ImageUrl, string Description, double BodyProfile, double SmokinessProfile, double SweetnessProfile, double? AlcoholProfile, decimal MinMarketPriceIls, decimal MaxMarketPriceIls, Guid? RequestId = null);

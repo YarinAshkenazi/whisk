@@ -34,7 +34,7 @@ public class AdminController : ControllerBase
     public async Task<ActionResult<AdminDashboardDto>> GetDashboard(
         [FromServices] IRecommendationService recs)
     {
-        var (f1Score, sampleSize) = await ComputeF1ScoreAsync(recs);
+        var f1Metrics = await ComputeF1MetricsAsync(recs);
 
         return Ok(new AdminDashboardDto(
             await _db.Users.CountAsync(),
@@ -43,20 +43,14 @@ public class AdminController : ControllerBase
             await _db.TastingNotes.CountAsync(),
             await _db.CollectionItems.CountAsync(),
             await _db.WhiskeyRequests.CountAsync(r => r.Status == WhiskeyRequestStatus.Pending),
-            f1Score, sampleSize));
+            f1Metrics));
     }
 
-    /// <summary>
-    /// F1 score for recommendation quality evaluation.
-    /// Compares predicted match scores against actual user tasting feedback.
-    /// Thresholds: predicted match >= 65% is "positive prediction",
-    /// actual PersonalFitPercent >= 65% is "user liked it".
-    /// Requires at least 10 user-bottle pairs with both prediction and tasting data.
-    /// </summary>
     private const int MatchPositiveThreshold = 65;
-    private const int MinF1Samples = 10;
+    private const int FeedbackPositiveThreshold = 65;
+    private const int MinF1Samples = 30;
 
-    private async Task<(double? f1, int? sampleSize)> ComputeF1ScoreAsync(IRecommendationService recs)
+    private async Task<F1MetricsDto> ComputeF1MetricsAsync(IRecommendationService recs)
     {
         var usersWithEnoughTastings = await _db.TastingNotes
             .GroupBy(t => t.UserId)
@@ -64,10 +58,7 @@ public class AdminController : ControllerBase
             .Select(g => g.Key)
             .ToListAsync();
 
-        if (usersWithEnoughTastings.Count == 0)
-            return (null, null);
-
-        int tp = 0, fp = 0, fn = 0;
+        int tp = 0, fp = 0, fn = 0, tn = 0;
         int totalSamples = 0;
 
         foreach (var userId in usersWithEnoughTastings.Take(50))
@@ -86,33 +77,36 @@ public class AdminController : ControllerBase
             if (latestByWhiskey.Count < 4) continue;
 
             var testTasting = latestByWhiskey.First();
-            var trainingIds = latestByWhiskey.Skip(1).Select(t => t.WhiskeyId).ToList();
-
-            if (trainingIds.Count < 3) continue;
+            if (latestByWhiskey.Skip(1).Count() < 3) continue;
 
             var predicted = await recs.GetBottleMatchAsync(userId, testTasting.WhiskeyId);
             if (predicted == null) continue;
 
             bool predictedPositive = predicted >= MatchPositiveThreshold;
-            bool actualPositive = testTasting.PersonalFitPercent >= MatchPositiveThreshold;
+            bool actualPositive = testTasting.PersonalFitPercent >= FeedbackPositiveThreshold;
 
             if (predictedPositive && actualPositive) tp++;
             else if (predictedPositive && !actualPositive) fp++;
             else if (!predictedPositive && actualPositive) fn++;
+            else tn++;
 
             totalSamples++;
         }
 
-        if (totalSamples < MinF1Samples)
-            return (null, totalSamples);
+        bool hasEnoughData = totalSamples >= MinF1Samples;
 
-        double precision = tp + fp > 0 ? (double)tp / (tp + fp) : 0;
-        double recall = tp + fn > 0 ? (double)tp / (tp + fn) : 0;
-        double f1 = precision + recall > 0
-            ? Math.Round(2 * precision * recall / (precision + recall), 3)
-            : 0;
+        double? precision = hasEnoughData && (tp + fp > 0) ? Math.Round((double)tp / (tp + fp), 3) : null;
+        double? recall = hasEnoughData && (tp + fn > 0) ? Math.Round((double)tp / (tp + fn), 3) : null;
+        double? f1 = (precision != null && recall != null && precision + recall > 0)
+            ? Math.Round(2.0 * precision.Value * recall.Value / (precision.Value + recall.Value), 3)
+            : null;
 
-        return (f1, totalSamples);
+        return new F1MetricsDto(
+            f1, precision, recall,
+            tp, fp, fn, tn,
+            totalSamples, MinF1Samples,
+            MatchPositiveThreshold, FeedbackPositiveThreshold,
+            totalSamples > 0 ? DateTime.UtcNow : null);
     }
 
     [HttpGet("users")]

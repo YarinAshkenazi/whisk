@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, RefreshControl } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import WhiskeyCard from '../../components/WhiskeyCard';
 import EmptyState from '../../components/EmptyState';
@@ -125,8 +126,8 @@ export default function MarketScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.searchRow}>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('GiftForFriend')} activeOpacity={0.7}>
-          <Text style={styles.iconBtnText}>{'\u{1F381}'}</Text>
+        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Filters', { filters, setFilters: (f) => { setFilters(f); setPage(1); } })} activeOpacity={0.7}>
+          <Ionicons name="filter" size={22} color={colors.text} />
         </TouchableOpacity>
         <TextInput
           style={styles.searchInput}
@@ -135,8 +136,8 @@ export default function MarketScreen({ navigation }) {
           value={search}
           onChangeText={handleSearch}
         />
-        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Filters', { filters, setFilters: (f) => { setFilters(f); setPage(1); } })} activeOpacity={0.7}>
-          <Text style={styles.iconBtnText}>{'\u{2699}\u{FE0F}'}</Text>
+        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('GiftForFriend')} activeOpacity={0.7}>
+          <Text style={styles.iconBtnText}>{'\u{1F381}'}</Text>
         </TouchableOpacity>
       </View>
 
