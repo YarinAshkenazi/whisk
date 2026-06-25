@@ -1,6 +1,8 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Whisk.Api.Extensions;
 using Whisk.Application.DTOs;
 using Whisk.Application.Interfaces;
@@ -93,6 +95,78 @@ public class WhiskiesController : ControllerBase
     {
         var cats = await _db.WhiskeyCategories.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
         return Ok(cats.Select(c => new CategoryDto(c.Id, c.Name, c.IsActive)).ToList());
+    }
+
+    [HttpPost("gift-recommendation")]
+    public async Task<ActionResult<GiftRecommendationResponse>> GetGiftRecommendation(
+        [FromBody] GiftRecommendationRequest request,
+        [FromServices] IGeminiPrefillService gemini,
+        [FromServices] ILogger<WhiskiesController> logger)
+    {
+        if (string.IsNullOrWhiteSpace(request.Description))
+            return BadRequest(new { error = "Description is required" });
+        if (request.MaxPrice < request.MinPrice)
+            return BadRequest(new { error = "Max price must be greater than or equal to min price" });
+
+        var bottles = await _db.Whiskies
+            .Include(w => w.Category)
+            .Where(w => w.IsActive)
+            .ToListAsync();
+
+        if (bottles.Count == 0)
+            return Ok(new { error = "No bottles available" });
+
+        var inBudget = bottles
+            .Where(w => w.MinMarketPriceIls <= request.MaxPrice && w.MaxMarketPriceIls >= request.MinPrice)
+            .ToList();
+
+        var candidates = inBudget.Count > 0 ? inBudget : bottles;
+
+        var catalog = candidates.Take(80).Select(w => new
+        {
+            id = w.Id.ToString(),
+            name = w.Name,
+            brand = w.Brand,
+            age = w.Age,
+            category = w.Category?.Name,
+            country = w.Country,
+            region = w.Region,
+            priceMin = w.MinMarketPriceIls,
+            priceMax = w.MaxMarketPriceIls,
+            body = w.BodyProfile,
+            smokiness = w.SmokinessProfile,
+            sweetness = w.SweetnessProfile,
+            description = w.Description?.Length > 100 ? w.Description[..100] : w.Description
+        });
+
+        var catalogJson = JsonSerializer.Serialize(catalog);
+        var result = await gemini.RecommendGiftAsync(
+            request.Description, request.MinPrice, request.MaxPrice, catalogJson);
+
+        if (result == null)
+            return StatusCode(502, new { error = "AI could not generate a recommendation. Please try again." });
+
+        var matched = bottles.FirstOrDefault(w =>
+            w.Id.ToString().Equals(result.BottleId, StringComparison.OrdinalIgnoreCase));
+
+        if (matched == null)
+        {
+            matched = bottles
+                .OrderBy(w => Math.Abs((double)((w.MinMarketPriceIls + w.MaxMarketPriceIls) / 2) - (double)((request.MinPrice + request.MaxPrice) / 2)))
+                .First();
+            result = new GeminiGiftResult
+            {
+                BottleId = matched.Id.ToString(),
+                Explanation = "Here's a great whisky option based on your description."
+            };
+        }
+
+        var avgPrice = (matched.MinMarketPriceIls + matched.MaxMarketPriceIls) / 2;
+        bool outsideBudget = avgPrice < request.MinPrice || avgPrice > request.MaxPrice;
+
+        return Ok(new GiftRecommendationResponse(
+            matched.Id, matched.Name, matched.Brand, avgPrice,
+            matched.ImageUrl, result.Explanation, outsideBudget));
     }
 
     private static WhiskeyDto MapWhiskey(Domain.Entities.Whiskey w, int? match)

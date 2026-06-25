@@ -3,6 +3,7 @@ namespace Whisk.Application.Interfaces;
 public interface IGeminiPrefillService
 {
     Task<GeminiWhiskyResult?> PrefillWhiskyAsync(string bottleName, string? brand, List<string> categoryNames);
+    Task<GeminiGiftResult?> RecommendGiftAsync(string description, decimal minPrice, decimal maxPrice, string catalogJson);
 }
 
 public class GeminiWhiskyResult
@@ -23,4 +24,10 @@ public class GeminiWhiskyResult
     public double? AlcoholProfile { get; set; }
     public decimal MinMarketPriceIls { get; set; }
     public decimal MaxMarketPriceIls { get; set; }
+}
+
+public class GeminiGiftResult
+{
+    public string BottleId { get; set; } = "";
+    public string Explanation { get; set; } = "";
 }

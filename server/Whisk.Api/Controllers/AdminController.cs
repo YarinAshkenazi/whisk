@@ -31,15 +31,88 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("dashboard")]
-    public async Task<ActionResult<AdminDashboardDto>> GetDashboard()
+    public async Task<ActionResult<AdminDashboardDto>> GetDashboard(
+        [FromServices] IRecommendationService recs)
     {
+        var (f1Score, sampleSize) = await ComputeF1ScoreAsync(recs);
+
         return Ok(new AdminDashboardDto(
             await _db.Users.CountAsync(),
             await _db.Users.CountAsync(u => u.IsActive),
             await _db.Whiskies.CountAsync(w => w.IsActive),
             await _db.TastingNotes.CountAsync(),
             await _db.CollectionItems.CountAsync(),
-            await _db.WhiskeyRequests.CountAsync(r => r.Status == WhiskeyRequestStatus.Pending)));
+            await _db.WhiskeyRequests.CountAsync(r => r.Status == WhiskeyRequestStatus.Pending),
+            f1Score, sampleSize));
+    }
+
+    /// <summary>
+    /// F1 score for recommendation quality evaluation.
+    /// Compares predicted match scores against actual user tasting feedback.
+    /// Thresholds: predicted match >= 65% is "positive prediction",
+    /// actual PersonalFitPercent >= 65% is "user liked it".
+    /// Requires at least 10 user-bottle pairs with both prediction and tasting data.
+    /// </summary>
+    private const int MatchPositiveThreshold = 65;
+    private const int MinF1Samples = 10;
+
+    private async Task<(double? f1, int? sampleSize)> ComputeF1ScoreAsync(IRecommendationService recs)
+    {
+        var usersWithEnoughTastings = await _db.TastingNotes
+            .GroupBy(t => t.UserId)
+            .Where(g => g.Count() >= 3)
+            .Select(g => g.Key)
+            .ToListAsync();
+
+        if (usersWithEnoughTastings.Count == 0)
+            return (null, null);
+
+        int tp = 0, fp = 0, fn = 0;
+        int totalSamples = 0;
+
+        foreach (var userId in usersWithEnoughTastings.Take(50))
+        {
+            var tastings = await _db.TastingNotes
+                .Include(t => t.Whiskey)
+                .Where(t => t.UserId == userId)
+                .OrderByDescending(t => t.TastingDate)
+                .ToListAsync();
+
+            var latestByWhiskey = tastings
+                .GroupBy(t => t.WhiskeyId)
+                .Select(g => g.First())
+                .ToList();
+
+            if (latestByWhiskey.Count < 4) continue;
+
+            var testTasting = latestByWhiskey.First();
+            var trainingIds = latestByWhiskey.Skip(1).Select(t => t.WhiskeyId).ToList();
+
+            if (trainingIds.Count < 3) continue;
+
+            var predicted = await recs.GetBottleMatchAsync(userId, testTasting.WhiskeyId);
+            if (predicted == null) continue;
+
+            bool predictedPositive = predicted >= MatchPositiveThreshold;
+            bool actualPositive = testTasting.PersonalFitPercent >= MatchPositiveThreshold;
+
+            if (predictedPositive && actualPositive) tp++;
+            else if (predictedPositive && !actualPositive) fp++;
+            else if (!predictedPositive && actualPositive) fn++;
+
+            totalSamples++;
+        }
+
+        if (totalSamples < MinF1Samples)
+            return (null, totalSamples);
+
+        double precision = tp + fp > 0 ? (double)tp / (tp + fp) : 0;
+        double recall = tp + fn > 0 ? (double)tp / (tp + fn) : 0;
+        double f1 = precision + recall > 0
+            ? Math.Round(2 * precision * recall / (precision + recall), 3)
+            : 0;
+
+        return (f1, totalSamples);
     }
 
     [HttpGet("users")]

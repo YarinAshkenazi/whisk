@@ -5,4 +5,5 @@ export const whiskiesApi = {
   getWhiskey: (id) => apiClient.get(`/whiskies/${id}`),
   getMatch: (id) => apiClient.get(`/whiskies/${id}/match`),
   getCategories: () => apiClient.get('/categories'),
+  giftRecommendation: (data) => apiClient.post('/whiskies/gift-recommendation', data, { timeout: 45000 }),
 };

@@ -168,16 +168,14 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
       <Input label="Name" value={form.name} onChangeText={v => setField('name', v)} />
       <Input label="Brand" value={form.brand} onChangeText={v => setField('brand', v)} />
 
-      {!isEdit && (
-        <TouchableOpacity style={[styles.aiBtn, aiFilling && styles.aiBtnDisabled]} onPress={handleAiFill} disabled={aiFilling} activeOpacity={0.7}>
-          {aiFilling ? (
-            <ActivityIndicator color={colors.accent} size="small" style={{ marginRight: 8 }} />
-          ) : (
-            <Text style={styles.aiIcon}>{'\u2728'}</Text>
-          )}
-          <Text style={styles.aiBtnText}>{aiFilling ? 'Generating...' : 'AI Fill'}</Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity style={[styles.aiBtn, aiFilling && styles.aiBtnDisabled]} onPress={handleAiFill} disabled={aiFilling} activeOpacity={0.7}>
+        {aiFilling ? (
+          <ActivityIndicator color={colors.accent} size="small" style={{ marginRight: 8 }} />
+        ) : (
+          <Text style={styles.aiIcon}>{'\u2728'}</Text>
+        )}
+        <Text style={styles.aiBtnText}>{aiFilling ? 'Generating...' : 'AI Fill'}</Text>
+      </TouchableOpacity>
 
       <Input label="Age (optional)" value={form.age} onChangeText={v => setField('age', v)} keyboardType="numeric" />
       <Input label="Country" value={form.country} onChangeText={v => setField('country', v)} />

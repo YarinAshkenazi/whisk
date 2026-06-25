@@ -84,7 +84,6 @@ export default function MarketScreen({ navigation }) {
 
   const handleRefresh = useCallback(() => {
     setPage(1);
-    setAllItems([]);
     refetch();
   }, [refetch]);
 
@@ -126,6 +125,9 @@ export default function MarketScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.searchRow}>
+        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('GiftForFriend')} activeOpacity={0.7}>
+          <Text style={styles.iconBtnText}>{'\u{1F381}'}</Text>
+        </TouchableOpacity>
         <TextInput
           style={styles.searchInput}
           placeholder="Search whiskies..."
@@ -133,8 +135,8 @@ export default function MarketScreen({ navigation }) {
           value={search}
           onChangeText={handleSearch}
         />
-        <TouchableOpacity style={styles.filterBtn} onPress={() => navigation.navigate('Filters', { filters, setFilters: (f) => { setFilters(f); setPage(1); } })}>
-          <Text style={styles.filterIcon}>{'\u{1F50D}'}</Text>
+        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Filters', { filters, setFilters: (f) => { setFilters(f); setPage(1); } })} activeOpacity={0.7}>
+          <Text style={styles.iconBtnText}>{'\u{2699}\u{FE0F}'}</Text>
         </TouchableOpacity>
       </View>
 
@@ -176,10 +178,10 @@ export default function MarketScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  searchRow: { flexDirection: 'row', padding: spacing.md, gap: spacing.sm },
-  searchInput: { flex: 1, backgroundColor: colors.inputBg, color: colors.text, borderRadius: borderRadius.sm, paddingHorizontal: spacing.md, paddingVertical: 10, fontSize: 15, borderWidth: 1, borderColor: colors.border },
-  filterBtn: { backgroundColor: colors.card, borderRadius: borderRadius.sm, width: 44, alignItems: 'center', justifyContent: 'center' },
-  filterIcon: { fontSize: 20 },
+  searchRow: { flexDirection: 'row', padding: spacing.md, gap: spacing.sm, alignItems: 'center' },
+  searchInput: { flex: 1, backgroundColor: colors.inputBg, color: colors.text, borderRadius: borderRadius.sm, paddingHorizontal: spacing.md, paddingVertical: 10, fontSize: 15, borderWidth: 1, borderColor: colors.border, height: 44 },
+  iconBtn: { backgroundColor: colors.card, borderRadius: borderRadius.sm, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  iconBtnText: { fontSize: 20 },
   sortRow: { flexDirection: 'row', paddingHorizontal: spacing.md, marginBottom: spacing.sm, gap: spacing.xs, flexWrap: 'wrap' },
   sortChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: borderRadius.full, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   sortChipActive: { backgroundColor: colors.accent, borderColor: colors.accent },

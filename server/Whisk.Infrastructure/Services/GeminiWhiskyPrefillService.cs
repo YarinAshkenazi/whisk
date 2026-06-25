@@ -157,4 +157,75 @@ public class GeminiWhiskyPrefillService : IGeminiPrefillService
             return null;
         }
     }
+
+    public async Task<GeminiGiftResult?> RecommendGiftAsync(
+        string description, decimal minPrice, decimal maxPrice, string catalogJson)
+    {
+        var apiKey = _configuration["GEMINI_API_KEY"];
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new InvalidOperationException("GEMINI_API_KEY is not configured");
+
+        var prompt = $$"""
+            You are a whisky gift advisor for a mobile whisky app.
+            A user wants to buy a whisky bottle as a gift.
+
+            User request: {{description}}
+            Budget: {{minPrice}} - {{maxPrice}} NIS (Israeli Shekels)
+
+            Available bottles (JSON array):
+            {{catalogJson}}
+
+            Choose exactly ONE bottle from the list above that best matches the user's request.
+            Consider: mentioned brands, flavor preferences (smoky, sweet, smooth, peated, sherry, etc.),
+            occasion, price range, and overall suitability as a gift.
+
+            If no bottle fits perfectly in the budget, choose the closest suitable one.
+
+            Return only valid JSON with exactly these fields:
+            {
+              "bottleId": "the id field of the chosen bottle",
+              "explanation": "2-3 sentences explaining why this bottle is a great gift choice"
+            }
+            """;
+
+        var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={apiKey}";
+        var requestBody = new
+        {
+            contents = new[] { new { parts = new[] { new { text = prompt } } } },
+            generationConfig = new { responseMimeType = "application/json" }
+        };
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync(url, requestBody);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Gemini gift API returned {Status}: {Body}", response.StatusCode, errorBody);
+                return null;
+            }
+
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+            var text = json.GetProperty("candidates")[0]
+                .GetProperty("content").GetProperty("parts")[0]
+                .GetProperty("text").GetString();
+
+            if (string.IsNullOrWhiteSpace(text)) return null;
+
+            var cleaned = text.Trim();
+            if (cleaned.StartsWith("```"))
+            {
+                var nl = cleaned.IndexOf('\n');
+                var last = cleaned.LastIndexOf("```");
+                if (nl > 0 && last > nl) cleaned = cleaned[(nl + 1)..last].Trim();
+            }
+
+            return JsonSerializer.Deserialize<GeminiGiftResult>(cleaned, JsonOptions);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Gemini gift recommendation failed");
+            return null;
+        }
+    }
 }

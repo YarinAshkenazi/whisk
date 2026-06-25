@@ -9,6 +9,10 @@ export default function AdminDashboardScreen() {
   const { data, isLoading } = useAdminDashboard();
   if (isLoading) return <LoadingScreen />;
 
+  const f1Display = data?.f1Score != null
+    ? `${(data.f1Score * 100).toFixed(1)}%`
+    : (data?.f1SampleSize != null ? `${data.f1SampleSize} samples` : null);
+
   const stats = [
     { label: 'Total Users', value: data?.totalUsers, icon: '\u{1F465}' },
     { label: 'Active Users', value: data?.activeUsers, icon: '\u{2705}' },
@@ -16,6 +20,7 @@ export default function AdminDashboardScreen() {
     { label: 'Tastings', value: data?.totalTastings, icon: '\u{1F4DD}' },
     { label: 'Collection Items', value: data?.totalCollectionItems, icon: '\u{1F4E6}' },
     { label: 'Pending Requests', value: data?.pendingRequests, icon: '\u{23F3}' },
+    { label: 'F1 Score', value: f1Display ?? 'Not enough data', icon: '\u{1F3AF}' },
   ];
 
   return (

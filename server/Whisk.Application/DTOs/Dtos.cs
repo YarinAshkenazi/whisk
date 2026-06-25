@@ -41,7 +41,7 @@ public record WhiskeyRequestDto(Guid Id, string Name, string Brand, string? Deta
 public record CreateWhiskeyRequestDto(string Name, string Brand, string? Details);
 
 // Admin
-public record AdminDashboardDto(int TotalUsers, int ActiveUsers, int TotalWhiskies, int TotalTastings, int TotalCollectionItems, int PendingRequests);
+public record AdminDashboardDto(int TotalUsers, int ActiveUsers, int TotalWhiskies, int TotalTastings, int TotalCollectionItems, int PendingRequests, double? F1Score, int? F1SampleSize);
 public record AdminUserDto(Guid Id, string Nickname, string Email, string Country, string Role, int BarrelLevel, bool IsActive, DateTime CreatedAt, DateTime? LastLoginAt, int TastingCount, int CollectionCount);
 public record AdminWhiskeyDto(Guid Id, string Name, string Brand, int? Age, string Country, string Region, string Distillery, int CategoryId, string CategoryName, int VolumeML, double AlcoholPercentage, string ImageUrl, string Description, double BodyProfile, double SmokinessProfile, double SweetnessProfile, double? AlcoholProfile, decimal MinMarketPriceIls, decimal MaxMarketPriceIls, bool IsActive, DateTime CreatedAt, DateTime UpdatedAt);
 public record CreateWhiskeyRequest(string Name, string Brand, int? Age, string Country, string Region, string Distillery, int CategoryId, int VolumeML, double AlcoholPercentage, string ImageUrl, string Description, double BodyProfile, double SmokinessProfile, double SweetnessProfile, double? AlcoholProfile, decimal MinMarketPriceIls, decimal MaxMarketPriceIls, Guid? RequestId = null);
@@ -58,3 +58,7 @@ public record RegisterPushTokenRequest(string Token);
 // AI Prefill
 public record AiPrefillRequest(string BottleName, string? Brand);
 public record AiPrefillResponse(string Name, string Brand, int? Age, string Country, string Region, string Distillery, int CategoryId, int VolumeML, double AlcoholPercentage, string Description, double BodyProfile, double SmokinessProfile, double SweetnessProfile, double? AlcoholProfile, decimal MinMarketPriceIls, decimal MaxMarketPriceIls);
+
+// Gift Recommendation
+public record GiftRecommendationRequest(decimal MinPrice, decimal MaxPrice, string Description);
+public record GiftRecommendationResponse(Guid WhiskeyId, string Name, string Brand, decimal Price, string? ImageUrl, string Explanation, bool IsOutsideBudget);
