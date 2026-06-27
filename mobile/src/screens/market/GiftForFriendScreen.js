@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   title: { ...typography.h2, marginBottom: 4 },
   subtitle: { color: colors.textSecondary, fontSize: 14, marginBottom: spacing.xl },
   sectionTitle: { ...typography.h3, marginBottom: spacing.sm },
-  row: { flexDirection: 'row' },
+  row: { flexDirection: 'row', direction: 'ltr' },
   loadingContainer: { alignItems: 'center', marginTop: spacing.xl },
   loadingText: { color: colors.textSecondary, marginTop: spacing.md, fontSize: 14, textAlign: 'center' },
   errorCard: { marginTop: spacing.lg, padding: spacing.lg },

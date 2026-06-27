@@ -179,7 +179,7 @@ export default function AppNavigator() {
     return <LockScreen onUnlock={biometrics.unlock} />;
   }
 
-  const biometricsCtx = { isEnabled: biometrics.isEnabled, label: biometrics.label, toggle: biometrics.toggle };
+  const biometricsCtx = { isEnabled: biometrics.isEnabled, label: biometrics.label, toggle: biometrics.toggle, suppressLock: biometrics.suppressLock, resumeLock: biometrics.resumeLock };
 
   return (
     <BiometricsProvider value={biometricsCtx}>

@@ -4,6 +4,8 @@ const BiometricsContext = createContext({
   isEnabled: false,
   label: 'Use Biometrics',
   toggle: async () => {},
+  suppressLock: () => {},
+  resumeLock: () => {},
 });
 
 export function BiometricsProvider({ value, children }) {

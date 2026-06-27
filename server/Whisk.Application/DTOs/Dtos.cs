@@ -23,7 +23,7 @@ public record CategoryDto(int Id, string Name, bool IsActive);
 
 // Collection
 public record CollectionItemDto(Guid Id, Guid WhiskeyId, string WhiskeyName, string WhiskeyImageUrl, string CategoryName, decimal? PurchasePriceIls, DateTime? PurchaseDate, string Status, string Notes, decimal? CurrentMarketValue, DateTime AddedAt);
-public record CollectionSummaryDto(int TotalBottles, int ClosedBottles, decimal TotalPurchaseCost, decimal TotalMarketValue, decimal ProfitLoss, int BarrelLevel);
+public record CollectionSummaryDto(int TotalBottles, int ClosedBottles, decimal TotalPurchaseCost, decimal TotalMarketValue, decimal ProfitLoss, int BarrelLevel, decimal TotalSpent);
 public record AddCollectionItemRequest(Guid WhiskeyId, decimal? PurchasePriceIls, DateTime? PurchaseDate, string? Status, string? Notes);
 public record UpdateCollectionItemRequest(decimal? PurchasePriceIls, DateTime? PurchaseDate, string? Status, string? Notes);
 

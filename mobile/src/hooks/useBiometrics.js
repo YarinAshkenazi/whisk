@@ -19,6 +19,7 @@ export function useBiometrics(isAuthenticated) {
 
   const backgroundedAt = useRef(null);
   const hasInitialUnlocked = useRef(false);
+  const suppressedRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,6 +43,8 @@ export function useBiometrics(isAuthenticated) {
     if (!isAuthenticated || !isEnabled) return;
 
     const subscription = AppState.addEventListener('change', (nextState) => {
+      if (suppressedRef.current) return;
+
       if (nextState === 'background' || nextState === 'inactive') {
         backgroundedAt.current = Date.now();
       } else if (nextState === 'active' && backgroundedAt.current) {
@@ -87,5 +90,14 @@ export function useBiometrics(isAuthenticated) {
     }
   }, [isEnabled]);
 
-  return { isEnabled, isLocked, label, loading, unlock, toggle };
+  const suppressLock = useCallback(() => {
+    suppressedRef.current = true;
+  }, []);
+
+  const resumeLock = useCallback(() => {
+    suppressedRef.current = false;
+    backgroundedAt.current = null;
+  }, []);
+
+  return { isEnabled, isLocked, label, loading, unlock, toggle, suppressLock, resumeLock };
 }

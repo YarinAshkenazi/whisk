@@ -24,6 +24,7 @@ export default function CollectionScreen({ navigation }) {
           <StatItem label="Cost" value={`\u20AA${summary.totalPurchaseCost?.toFixed(0)}`} />
           <StatItem label="Value" value={`\u20AA${summary.totalMarketValue?.toFixed(0)}`} />
           <StatItem label="P/L" value={`\u20AA${summary.profitLoss?.toFixed(0)}`} color={summary.profitLoss >= 0 ? colors.success : colors.error} />
+          <StatItem label="Total Spent" value={`\u20AA${summary.totalSpent?.toFixed(0)}`} />
         </View>
       </Card>
     );
@@ -71,8 +72,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   list: { padding: spacing.md, paddingBottom: spacing.xxl },
   summaryCard: { marginBottom: spacing.md },
-  statsRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
-  statItem: { alignItems: 'center' },
+  statsRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border, gap: spacing.sm },
+  statItem: { alignItems: 'center', minWidth: 60 },
   statLabel: { color: colors.textMuted, fontSize: 11 },
   statValue: { color: colors.text, fontSize: 16, fontWeight: '600' },
   card: { backgroundColor: colors.card, borderRadius: borderRadius.lg, padding: spacing.md, marginBottom: spacing.sm },

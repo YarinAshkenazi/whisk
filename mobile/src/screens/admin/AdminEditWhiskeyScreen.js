@@ -10,6 +10,7 @@ import { adminApi } from '../../api/admin';
 import { useQueryClient } from '@tanstack/react-query';
 import { getWhiskeyImageUrl } from '../../constants';
 import { useFeedback } from '../../utils/feedback';
+import { useBiometricsContext } from '../../hooks/BiometricsContext';
 
 export default function AdminEditWhiskeyScreen({ navigation, route }) {
   const existing = route.params?.whiskey;
@@ -18,6 +19,7 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
   const { data: categories } = useAdminCategories();
   const qc = useQueryClient();
   const { playSuccess, playError } = useFeedback();
+  const { suppressLock, resumeLock } = useBiometricsContext();
 
   const source = existing || prefill || {};
   const [form, setForm] = useState({
@@ -60,15 +62,22 @@ export default function AdminEditWhiskeyScreen({ navigation, route }) {
       ? ImagePicker.launchCameraAsync
       : ImagePicker.launchImageLibraryAsync;
 
-    const result = await launchMethod({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [3, 4],
-      quality: 0.8,
-    });
+    try {
+      suppressLock();
+      const result = await launchMethod({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [3, 4],
+        quality: 0.8,
+      });
 
-    if (!result.canceled && result.assets?.[0]) {
-      setLocalImageUri(result.assets[0].uri);
+      if (!result.canceled && result.assets?.[0]) {
+        setLocalImageUri(result.assets[0].uri);
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Failed to select image. Please try again.');
+    } finally {
+      resumeLock();
     }
   };
 

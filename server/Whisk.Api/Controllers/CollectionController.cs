@@ -48,12 +48,13 @@ public class CollectionController : ControllerBase
         var totalBottles = items.Count;
         var closedItems = items.Where(c => c.Status == CollectionStatus.Closed).ToList();
         var closedCount = closedItems.Count;
-        var totalPurchase = items.Where(c => c.PurchasePriceIls.HasValue).Sum(c => c.PurchasePriceIls!.Value);
+        var totalPurchase = closedItems.Where(c => c.PurchasePriceIls.HasValue).Sum(c => c.PurchasePriceIls!.Value);
         var totalMarket = closedItems.Sum(c => (c.Whiskey.MinMarketPriceIls + c.Whiskey.MaxMarketPriceIls) / 2);
-        var profitLoss = totalMarket - closedItems.Where(c => c.PurchasePriceIls.HasValue).Sum(c => c.PurchasePriceIls!.Value);
+        var profitLoss = totalMarket - totalPurchase;
+        var totalSpent = items.Where(c => c.PurchasePriceIls.HasValue).Sum(c => c.PurchasePriceIls!.Value);
         var barrelLevel = BarrelLevelCalculator.Calculate(totalBottles);
 
-        return Ok(new CollectionSummaryDto(totalBottles, closedCount, totalPurchase, totalMarket, profitLoss, barrelLevel));
+        return Ok(new CollectionSummaryDto(totalBottles, closedCount, totalPurchase, totalMarket, profitLoss, barrelLevel, totalSpent));
     }
 
     [HttpPost]
