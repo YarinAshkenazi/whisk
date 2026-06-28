@@ -29,6 +29,7 @@ import ProfileScreen from '../screens/profile/ProfileScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import RequestBottleScreen from '../screens/market/RequestBottleScreen';
 import GiftForFriendScreen from '../screens/market/GiftForFriendScreen';
+import WhiskProsScreen from '../screens/collection/WhiskProsScreen';
 import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
 import AdminUsersScreen from '../screens/admin/AdminUsersScreen';
 import AdminWhiskiesScreen from '../screens/admin/AdminWhiskiesScreen';
@@ -202,6 +203,7 @@ export default function AppNavigator() {
               <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Edit Profile' }} />
               <Stack.Screen name="RequestBottle" component={RequestBottleScreen} options={{ title: 'Request Bottle' }} />
               <Stack.Screen name="GiftForFriend" component={GiftForFriendScreen} options={{ title: 'Gift for a Friend' }} />
+              <Stack.Screen name="WhiskPros" component={WhiskProsScreen} options={{ title: 'Whisk Pros' }} />
               <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ title: 'Admin Dashboard' }} />
               <Stack.Screen name="AdminUsers" component={AdminUsersScreen} options={{ title: 'Manage Users' }} />
               <Stack.Screen name="AdminWhiskies" component={AdminWhiskiesScreen} options={{ title: 'Manage Whiskies' }} />

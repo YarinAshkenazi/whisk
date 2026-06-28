@@ -77,3 +77,6 @@ public record AiPrefillResponse(string Name, string Brand, int? Age, string Coun
 // Gift Recommendation
 public record GiftRecommendationRequest(decimal MinPrice, decimal MaxPrice, string Description);
 public record GiftRecommendationResponse(Guid WhiskeyId, string Name, string Brand, decimal Price, string? ImageUrl, string Explanation, bool IsOutsideBudget);
+
+// Leaderboard
+public record LeaderboardEntryDto(string Nickname, int ClosedBottles, decimal Cost, decimal MarketValue, decimal ProfitLoss);

@@ -24,6 +24,9 @@ export const useCollection = () =>
 export const useCollectionSummary = () =>
   useQuery({ queryKey: ['collectionSummary'], queryFn: () => collectionApi.getSummary().then(r => r.data) });
 
+export const useLeaderboard = () =>
+  useQuery({ queryKey: ['leaderboard'], queryFn: () => collectionApi.getLeaderboard().then(r => r.data) });
+
 export const useAddCollectionItem = () => {
   const qc = useQueryClient();
   return useMutation({

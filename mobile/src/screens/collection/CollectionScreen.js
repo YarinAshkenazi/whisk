@@ -18,7 +18,12 @@ export default function CollectionScreen({ navigation }) {
     if (!summary) return null;
     return (
       <Card style={styles.summaryCard}>
-        <BarrelLevel level={summary.barrelLevel} totalBottles={summary.totalBottles} />
+        <View style={styles.levelRow}>
+          <BarrelLevel level={summary.barrelLevel} totalBottles={summary.totalBottles} />
+          <TouchableOpacity style={styles.crownBtn} onPress={() => navigation.navigate('WhiskPros')} activeOpacity={0.7}>
+            <Text style={styles.crownIcon}>{'\u{1F451}'}</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.statsRow}>
           <StatItem label="Closed" value={summary.closedBottles} />
           <StatItem label="Cost" value={`\u20AA${summary.totalPurchaseCost?.toFixed(0)}`} />
@@ -72,6 +77,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   list: { padding: spacing.md, paddingBottom: spacing.xxl },
   summaryCard: { marginBottom: spacing.md },
+  levelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  crownBtn: { padding: 8, borderRadius: borderRadius.sm, backgroundColor: colors.surface },
+  crownIcon: { fontSize: 22 },
   statsRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border, gap: spacing.sm },
   statItem: { alignItems: 'center', minWidth: 60 },
   statLabel: { color: colors.textMuted, fontSize: 11 },

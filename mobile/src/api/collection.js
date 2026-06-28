@@ -6,4 +6,5 @@ export const collectionApi = {
   addItem: (data) => apiClient.post('/collection', data),
   updateItem: (id, data) => apiClient.put(`/collection/${id}`, data),
   deleteItem: (id) => apiClient.delete(`/collection/${id}`),
+  getLeaderboard: () => apiClient.get('/collection/leaderboard'),
 };

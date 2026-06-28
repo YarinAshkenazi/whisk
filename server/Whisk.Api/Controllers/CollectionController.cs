@@ -130,6 +130,29 @@ public class CollectionController : ControllerBase
         return NoContent();
     }
 
+    [HttpGet("leaderboard")]
+    public async Task<ActionResult<List<LeaderboardEntryDto>>> GetLeaderboard()
+    {
+        var closedItems = await _db.CollectionItems
+            .Include(c => c.Whiskey)
+            .Include(c => c.User)
+            .Where(c => c.Status == CollectionStatus.Closed)
+            .ToListAsync();
+
+        var entries = closedItems
+            .GroupBy(c => c.User.Nickname)
+            .Select(g =>
+            {
+                var cost = g.Where(c => c.PurchasePriceIls.HasValue).Sum(c => c.PurchasePriceIls!.Value);
+                var marketValue = g.Sum(c => (c.Whiskey.MinMarketPriceIls + c.Whiskey.MaxMarketPriceIls) / 2);
+                return new LeaderboardEntryDto(g.Key, g.Count(), cost, marketValue, marketValue - cost);
+            })
+            .OrderByDescending(e => e.ProfitLoss)
+            .ToList();
+
+        return Ok(entries);
+    }
+
     private async Task UpdateBarrelLevel(Guid userId)
     {
         var user = await _db.Users.FindAsync(userId);
