@@ -320,4 +320,17 @@ public class RecommendationService : IRecommendationService
 
         return result;
     }
+
+    public int? PredictMatchFromHistory(List<TastingNote> historicalTastings, Whiskey targetWhiskey)
+    {
+        if (historicalTastings.Count < MinTastingsRequired || targetWhiskey == null)
+            return null;
+
+        var withWhiskey = historicalTastings.Where(t => t.Whiskey != null).ToList();
+        if (withWhiskey.Count < MinTastingsRequired) return null;
+
+        var userProfile = ComputeUserPreferenceProfile(withWhiskey);
+        var contentScore = ComputeContentSimilarity(userProfile, targetWhiskey);
+        return (int)Math.Round(Math.Clamp(contentScore * 100, 0, 100));
+    }
 }

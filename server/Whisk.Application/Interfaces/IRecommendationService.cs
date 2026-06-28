@@ -6,4 +6,5 @@ public interface IRecommendationService
     Task<int?> GetBottleMatchAsync(Guid userId, Guid whiskeyId, CancellationToken ct = default);
     Task<Dictionary<Guid, int?>> GetBatchBottleMatchesAsync(Guid userId, List<Guid> whiskeyIds, CancellationToken ct = default);
     Task<DTOs.RecommendationStatusDto> GetStatusAsync(Guid userId, CancellationToken ct = default);
+    int? PredictMatchFromHistory(List<Domain.Entities.TastingNote> historicalTastings, Domain.Entities.Whiskey targetWhiskey);
 }

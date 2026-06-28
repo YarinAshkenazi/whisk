@@ -49,48 +49,60 @@ public class AdminController : ControllerBase
     private const int MatchPositiveThreshold = 65;
     private const int FeedbackPositiveThreshold = 65;
     private const int MinF1Samples = 30;
+    private const int MaxF1Samples = 20000;
 
     private async Task<F1MetricsDto> ComputeF1MetricsAsync(IRecommendationService recs)
     {
         var usersWithEnoughTastings = await _db.TastingNotes
             .GroupBy(t => t.UserId)
-            .Where(g => g.Count() >= 3)
+            .Where(g => g.Count() >= 4)
             .Select(g => g.Key)
             .ToListAsync();
 
         int tp = 0, fp = 0, fn = 0, tn = 0;
         int totalSamples = 0;
 
-        foreach (var userId in usersWithEnoughTastings.Take(50))
+        foreach (var userId in usersWithEnoughTastings)
         {
+            if (totalSamples >= MaxF1Samples) break;
+
             var tastings = await _db.TastingNotes
                 .Include(t => t.Whiskey)
                 .Where(t => t.UserId == userId)
-                .OrderByDescending(t => t.TastingDate)
+                .OrderBy(t => t.TastingDate)
+                .ThenBy(t => t.CreatedAt)
                 .ToListAsync();
 
-            var latestByWhiskey = tastings
+            var uniqueTastings = tastings
                 .GroupBy(t => t.WhiskeyId)
                 .Select(g => g.First())
+                .OrderBy(t => t.TastingDate)
+                .ThenBy(t => t.CreatedAt)
                 .ToList();
 
-            if (latestByWhiskey.Count < 4) continue;
+            if (uniqueTastings.Count < 4) continue;
 
-            var testTasting = latestByWhiskey.First();
-            if (latestByWhiskey.Skip(1).Count() < 3) continue;
+            for (int i = 3; i < uniqueTastings.Count; i++)
+            {
+                if (totalSamples >= MaxF1Samples) break;
 
-            var predicted = await recs.GetBottleMatchAsync(userId, testTasting.WhiskeyId);
-            if (predicted == null) continue;
+                var testTasting = uniqueTastings[i];
+                if (testTasting.Whiskey == null) continue;
 
-            bool predictedPositive = predicted >= MatchPositiveThreshold;
-            bool actualPositive = testTasting.PersonalFitPercent >= FeedbackPositiveThreshold;
+                var history = uniqueTastings.Take(i).ToList();
+                var predicted = recs.PredictMatchFromHistory(history, testTasting.Whiskey);
+                if (predicted == null) continue;
 
-            if (predictedPositive && actualPositive) tp++;
-            else if (predictedPositive && !actualPositive) fp++;
-            else if (!predictedPositive && actualPositive) fn++;
-            else tn++;
+                bool predictedPositive = predicted >= MatchPositiveThreshold;
+                bool actualPositive = testTasting.PersonalFitPercent >= FeedbackPositiveThreshold;
 
-            totalSamples++;
+                if (predictedPositive && actualPositive) tp++;
+                else if (predictedPositive && !actualPositive) fp++;
+                else if (!predictedPositive && actualPositive) fn++;
+                else tn++;
+
+                totalSamples++;
+            }
         }
 
         bool hasEnoughData = totalSamples >= MinF1Samples;
@@ -104,7 +116,7 @@ public class AdminController : ControllerBase
         return new F1MetricsDto(
             f1, precision, recall,
             tp, fp, fn, tn,
-            totalSamples, MinF1Samples,
+            totalSamples, MinF1Samples, MaxF1Samples,
             MatchPositiveThreshold, FeedbackPositiveThreshold,
             totalSamples > 0 ? DateTime.UtcNow : null);
     }

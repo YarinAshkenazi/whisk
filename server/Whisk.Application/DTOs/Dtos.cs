@@ -53,6 +53,7 @@ public record F1MetricsDto(
     int TrueNegatives,
     int EvaluatedSamples,
     int MinimumSamplesRequired,
+    int MaximumSamplesAllowed,
     int PositivePredictionThreshold,
     int PositiveFeedbackThreshold,
     DateTime? LastUpdated);

@@ -20,6 +20,7 @@ function F1DetailModal({ visible, onClose, metrics }) {
     null,
     { label: 'Evaluated Samples', value: `${metrics.evaluatedSamples}` },
     { label: 'Minimum Required', value: `${metrics.minimumSamplesRequired}` },
+    { label: 'Maximum Allowed', value: `${metrics.maximumSamplesAllowed?.toLocaleString() ?? 'N/A'}` },
     null,
     { label: 'True Positives (TP)', value: `${metrics.truePositives}` },
     { label: 'False Positives (FP)', value: `${metrics.falsePositives}` },
