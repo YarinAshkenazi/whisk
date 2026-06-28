@@ -90,6 +90,15 @@ function ProfileButton() {
   );
 }
 
+function CrownButton() {
+  const navigation = useNavigation();
+  return (
+    <Text onPress={() => navigation.navigate('WhiskPros')} style={{ fontSize: 22, marginLeft: 16 }}>
+      {'\u{1F451}'}
+    </Text>
+  );
+}
+
 function MainTabs() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = 65 + insets.bottom;
@@ -120,7 +129,10 @@ function MainTabs() {
       <Tab.Screen
         name="Collection"
         component={CollectionScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon label="Collection" focused={focused} /> }}
+        options={{
+          tabBarIcon: ({ focused }) => <TabIcon label="Collection" focused={focused} />,
+          headerLeft: () => <CrownButton />,
+        }}
       />
     </Tab.Navigator>
   );

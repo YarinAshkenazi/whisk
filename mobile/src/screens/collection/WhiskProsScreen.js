@@ -8,7 +8,7 @@ import { useLeaderboard } from '../../hooks/useApi';
 const SORT_OPTIONS = [
   { key: 'profitLoss', label: 'P/L' },
   { key: 'closedBottles', label: 'Bottles' },
-  { key: 'cost', label: 'Cost' },
+  { key: 'marketValue', label: 'Value' },
 ];
 
 export default function WhiskProsScreen() {
@@ -67,18 +67,16 @@ export default function WhiskProsScreen() {
         }
         renderItem={({ item, index }) => (
           <View style={styles.row}>
-            <View style={styles.rankCol}>
-              <Text style={[styles.rank, index < 3 && styles.rankTop]}>{index + 1}</Text>
-            </View>
+            <Text style={[styles.rank, index < 3 && styles.rankTop]}>#{index + 1}</Text>
             <View style={styles.infoCol}>
               <Text style={styles.nickname} numberOfLines={1}>{item.nickname}</Text>
-              <Text style={styles.bottles}>{item.closedBottles} bottle{item.closedBottles !== 1 ? 's' : ''}</Text>
-            </View>
-            <View style={styles.numbersCol}>
-              <Text style={styles.costText}>{'\u20AA'}{item.cost?.toFixed(0)}</Text>
-              <Text style={[styles.plText, item.profitLoss >= 0 ? styles.plPositive : styles.plNegative]}>
-                {item.profitLoss >= 0 ? '+' : ''}{'\u20AA'}{item.profitLoss?.toFixed(0)}
-              </Text>
+              <View style={styles.metricsRow}>
+                <Text style={styles.metricText}>Bottles: {item.closedBottles}</Text>
+                <Text style={styles.metricText}>Value: {'\u20AA'}{item.marketValue?.toFixed(0)}</Text>
+                <Text style={[styles.metricText, item.profitLoss >= 0 ? styles.plPositive : styles.plNegative]}>
+                  P/L: {item.profitLoss >= 0 ? '+' : ''}{'\u20AA'}{item.profitLoss?.toFixed(0)}
+                </Text>
+              </View>
             </View>
           </View>
         )}
@@ -105,15 +103,12 @@ const styles = StyleSheet.create({
   sortChipTextActive: { color: colors.text, fontWeight: '600' },
   list: { paddingHorizontal: spacing.md, paddingBottom: spacing.xxl },
   row: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: borderRadius.lg, padding: spacing.md, marginBottom: spacing.sm },
-  rankCol: { width: 36, alignItems: 'center' },
-  rank: { fontSize: 16, fontWeight: '700', color: colors.textSecondary },
+  rank: { fontSize: 16, fontWeight: '700', color: colors.textSecondary, width: 36 },
   rankTop: { color: colors.gold || colors.accent },
-  infoCol: { flex: 1, marginLeft: spacing.sm },
-  nickname: { color: colors.text, fontSize: 15, fontWeight: '600' },
-  bottles: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
-  numbersCol: { alignItems: 'flex-end' },
-  costText: { color: colors.textSecondary, fontSize: 12 },
-  plText: { fontSize: 14, fontWeight: '700', marginTop: 2 },
-  plPositive: { color: colors.success },
-  plNegative: { color: colors.error },
+  infoCol: { flex: 1 },
+  nickname: { color: colors.text, fontSize: 15, fontWeight: '600', marginBottom: 4 },
+  metricsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  metricText: { color: colors.textSecondary, fontSize: 12 },
+  plPositive: { color: colors.success, fontWeight: '600' },
+  plNegative: { color: colors.error, fontWeight: '600' },
 });
