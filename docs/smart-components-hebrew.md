@@ -334,6 +334,8 @@ F1 Score מודד את **איכות אלגוריתם ההמלצות**. הוא ב
 | קובץ | תפקיד |
 |-------|--------|
 | `server/Whisk.Api/Controllers/AdminController.cs` | `ComputeF1MetricsAsync` — חישוב |
+| `server/Whisk.Infrastructure/Services/RecommendationService.cs` | `PredictMatchFromHistory` — חיזוי מפרופיל היסטורי |
+| `server/Whisk.Application/Interfaces/IRecommendationService.cs` | Interface כולל מתודת חיזוי |
 | `server/Whisk.Application/DTOs/Dtos.cs` | `F1MetricsDto` — DTO |
 | `mobile/src/screens/admin/AdminDashboardScreen.js` | כרטיס F1 + מודל פרטים |
 
@@ -362,13 +364,34 @@ F1 = 2 × Precision × Recall / (Precision + Recall)
 
 ### מה נחשב sample
 
-כל sample הוא **זוג (משתמש, בקבוק)** שבו:
-1. למשתמש יש לפחות 4 טעימות ייחודיות
-2. המערכת "מחביאה" את הטעימה האחרונה
-3. האלגוריתם מנסה לחזות את ה-match score לבקבוק הזה על בסיס 3+ הטעימות הנותרות
-4. המערכת משווה את החיזוי ל-PersonalFitPercent האמיתי
+המערכת משתמשת בשיטת **Walk-Forward Validation** (ולידציה כרונולוגית):
 
-שיטה זו נקראת **Leave-One-Out Cross-Validation**.
+לכל משתמש:
+1. מיון כל הטעימות הייחודיות שלו לפי תאריך (עולה)
+2. 3 הטעימות הראשונות משמשות רק לבניית פרופיל הטעם ההתחלתי — **לא נספרות כדגימות**
+3. החל מהטעימה ה-4, כל טעימה ייחודית נספרת כ-**sample אחד**
+
+דוגמה:
+```text
+משתמש עם 12 טעימות ייחודיות:
+3 טעימות ראשונות = פרופיל בלבד
+טעימות 4–12 = 9 דגימות F1
+
+evaluatedSamples = 9
+```
+
+נוסחה גלובלית:
+```text
+evaluatedSamples = סכום על כל המשתמשים של max(0, uniqueTastingsCount - 3)
+```
+
+#### שיטת הוולידציה (Walk-Forward):
+- **טעימה #4**: חיזוי מבוסס על טעימות #1–#3 בלבד
+- **טעימה #5**: חיזוי מבוסס על טעימות #1–#4 בלבד
+- **טעימה #6**: חיזוי מבוסס על טעימות #1–#5 בלבד
+- וכן הלאה...
+
+**חשוב**: אין שימוש בנתוני עתיד לחיזוי — הטעימה הנבדקת לא נכללת בפרופיל ההיסטורי.
 
 ### קוד רלוונטי
 
@@ -378,48 +401,60 @@ F1 = 2 × Precision × Recall / (Precision + Recall)
 private const int MatchPositiveThreshold = 65;
 private const int FeedbackPositiveThreshold = 65;
 private const int MinF1Samples = 30;
+private const int MaxF1Samples = 20000;
 
 private async Task<F1MetricsDto> ComputeF1MetricsAsync(IRecommendationService recs)
 {
     var usersWithEnoughTastings = await _db.TastingNotes
         .GroupBy(t => t.UserId)
-        .Where(g => g.Count() >= 3)
+        .Where(g => g.Count() >= 4)
         .Select(g => g.Key)
         .ToListAsync();
 
     int tp = 0, fp = 0, fn = 0, tn = 0;
     int totalSamples = 0;
 
-    foreach (var userId in usersWithEnoughTastings.Take(50))
+    foreach (var userId in usersWithEnoughTastings)
     {
+        if (totalSamples >= MaxF1Samples) break;
+
         var tastings = await _db.TastingNotes
             .Include(t => t.Whiskey)
             .Where(t => t.UserId == userId)
-            .OrderByDescending(t => t.TastingDate)
+            .OrderBy(t => t.TastingDate)
+            .ThenBy(t => t.CreatedAt)
             .ToListAsync();
 
-        var latestByWhiskey = tastings
+        var uniqueTastings = tastings
             .GroupBy(t => t.WhiskeyId)
             .Select(g => g.First())
+            .OrderBy(t => t.TastingDate)
+            .ThenBy(t => t.CreatedAt)
             .ToList();
 
-        if (latestByWhiskey.Count < 4) continue;
+        if (uniqueTastings.Count < 4) continue;
 
-        var testTasting = latestByWhiskey.First();
-        if (latestByWhiskey.Skip(1).Count() < 3) continue;
+        for (int i = 3; i < uniqueTastings.Count; i++)
+        {
+            if (totalSamples >= MaxF1Samples) break;
 
-        var predicted = await recs.GetBottleMatchAsync(userId, testTasting.WhiskeyId);
-        if (predicted == null) continue;
+            var testTasting = uniqueTastings[i];
+            if (testTasting.Whiskey == null) continue;
 
-        bool predictedPositive = predicted >= MatchPositiveThreshold;
-        bool actualPositive = testTasting.PersonalFitPercent >= FeedbackPositiveThreshold;
+            var history = uniqueTastings.Take(i).ToList();
+            var predicted = recs.PredictMatchFromHistory(history, testTasting.Whiskey);
+            if (predicted == null) continue;
 
-        if (predictedPositive && actualPositive) tp++;
-        else if (predictedPositive && !actualPositive) fp++;
-        else if (!predictedPositive && actualPositive) fn++;
-        else tn++;
+            bool predictedPositive = predicted >= MatchPositiveThreshold;
+            bool actualPositive = testTasting.PersonalFitPercent >= FeedbackPositiveThreshold;
 
-        totalSamples++;
+            if (predictedPositive && actualPositive) tp++;
+            else if (predictedPositive && !actualPositive) fp++;
+            else if (!predictedPositive && actualPositive) fn++;
+            else tn++;
+
+            totalSamples++;
+        }
     }
 
     bool hasEnoughData = totalSamples >= MinF1Samples;
@@ -433,13 +468,32 @@ private async Task<F1MetricsDto> ComputeF1MetricsAsync(IRecommendationService re
     return new F1MetricsDto(
         f1, precision, recall,
         tp, fp, fn, tn,
-        totalSamples, MinF1Samples,
+        totalSamples, MinF1Samples, MaxF1Samples,
         MatchPositiveThreshold, FeedbackPositiveThreshold,
         totalSamples > 0 ? DateTime.UtcNow : null);
 }
 ```
 
-הסבר: הקוד עובר על עד 50 משתמשים שיש להם לפחות 3 טעימות. לכל משתמש — הוא "מחביא" את הטעימה האחרונה ושואל את אלגוריתם ההמלצות לחזות match score. אחר כך משווה את החיזוי למציאות. הסף הוא 65% — גם לחיזוי וגם לפידבק אמיתי.
+הסבר: הקוד עובר על כל המשתמשים שיש להם לפחות 4 טעימות. לכל משתמש — ממיין את הטעימות הייחודיות כרונולוגית ומבצע Walk-Forward: עבור כל טעימה מהרביעית ואילך, בונה פרופיל טעם **רק** מטעימות קודמות ומנסה לחזות את ה-match score. החיזוי משתמש במתודה `PredictMatchFromHistory` שמבצעת Content-Based Similarity בלבד (ללא Collaborative Filtering) על בסיס הפרופיל ההיסטורי. הלולאה עוצרת כשמגיעים ל-20,000 דגימות.
+
+#### מתודת חיזוי מהיסטוריה (RecommendationService.cs)
+
+```csharp
+public int? PredictMatchFromHistory(List<TastingNote> historicalTastings, Whiskey targetWhiskey)
+{
+    if (historicalTastings.Count < MinTastingsRequired || targetWhiskey == null)
+        return null;
+
+    var withWhiskey = historicalTastings.Where(t => t.Whiskey != null).ToList();
+    if (withWhiskey.Count < MinTastingsRequired) return null;
+
+    var userProfile = ComputeUserPreferenceProfile(withWhiskey);
+    var contentScore = ComputeContentSimilarity(userProfile, targetWhiskey);
+    return (int)Math.Round(Math.Clamp(contentScore * 100, 0, 100));
+}
+```
+
+הסבר: מתודה שמקבלת רשימת טעימות היסטוריות ובקבוק יעד, בונה פרופיל טעם אישי מהטעימות ומחשבת Content Similarity — בלי לגשת ל-DB ובלי להשתמש בנתוני עתיד.
 
 #### DTO
 
@@ -454,6 +508,7 @@ public record F1MetricsDto(
     int TrueNegatives,
     int EvaluatedSamples,
     int MinimumSamplesRequired,
+    int MaximumSamplesAllowed,
     int PositivePredictionThreshold,
     int PositiveFeedbackThreshold,
     DateTime? LastUpdated);
@@ -466,22 +521,27 @@ public record F1MetricsDto(
 | `MatchPositiveThreshold` | 65 | סף שמעליו חיזוי נחשב "חיובי" |
 | `FeedbackPositiveThreshold` | 65 | סף שמעליו PersonalFitPercent נחשב "אהב" |
 | `MinF1Samples` | 30 | מספר דגימות מינימלי לדיווח F1 |
+| `MaxF1Samples` | 20,000 | מספר דגימות מקסימלי (מגבלת ביצועים) |
 
 ### הסבר הקוד בעברית
 
 - אם יש פחות מ-30 דגימות — הדאשבורד מציג "N/A"
 - החישוב מתבצע בזמן אמת בכל טעינת הדאשבורד
-- מוגבל ל-50 משתמשים מקסימום לביצועים
+- מוגבל ל-20,000 דגימות מקסימום (ללא הגבלת מספר משתמשים)
+- משתמש עם 3 טעימות = 0 דגימות F1
+- משתמש עם 4 טעימות = 1 דגימה F1
+- משתמש עם 12 טעימות = 9 דגימות F1
 - F1 Score של 1.0 (100%) = אלגוריתם מושלם
 - F1 Score של 0 = אלגוריתם גרוע לחלוטין
+- החיזוי מבוסס על Content-Based בלבד (ללא Collaborative) כדי לשמור על דטרמיניזם ומהירות
 
 ### מגבלות
 
 - F1 אינו אמין עם פחות מ-30 דגימות
-- המדד מוגבל ל-50 משתמשים (ביצועים)
-- חישוב Leave-One-Out לא מתחשב בכל הנתונים בו-זמנית
+- החיזוי ב-F1 מבוסס רק על Content-Based (לא כולל Collaborative) לצורך מהירות ודטרמיניזם
 - הסף של 65% הוא קבוע ולא מותאם אוטומטית
 - תלוי באיכות הנתונים — משתמשים שנותנים פידבק לא מדויק ישפיעו
+- מוגבל ל-20,000 דגימות — אם יש יותר, רק 20,000 הראשונות מוערכות
 
 ---
 
