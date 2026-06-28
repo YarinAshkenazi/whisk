@@ -3,7 +3,7 @@ import { NavigationContainer, DarkTheme, useNavigation } from '@react-navigation
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Notifications from 'expo-notifications';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, View, Platform } from 'react-native';
+import { Text, View, Platform, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme';
 import { useAuthStore } from '../store/authStore';
@@ -93,9 +93,9 @@ function ProfileButton() {
 function CrownButton() {
   const navigation = useNavigation();
   return (
-    <Text onPress={() => navigation.navigate('WhiskPros')} style={{ fontSize: 22, marginLeft: 16 }}>
-      {'\u{1F451}'}
-    </Text>
+    <TouchableOpacity onPress={() => navigation.navigate('WhiskPros')} style={{ marginLeft: 12, backgroundColor: colors.card, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }} activeOpacity={0.7}>
+      <Text style={{ fontSize: 18 }}>{'\u{1F451}'}</Text>
+    </TouchableOpacity>
   );
 }
 
