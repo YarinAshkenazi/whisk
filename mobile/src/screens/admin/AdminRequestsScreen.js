@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius } from '../../theme';
 import Button from '../../components/Button';
 import StatusChip from '../../components/StatusChip';
@@ -12,6 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 export default function AdminRequestsScreen({ navigation }) {
   const { data: requests, isLoading } = useAdminRequests();
   const qc = useQueryClient();
+  const insets = useSafeAreaInsets();
 
   if (isLoading) return <LoadingScreen />;
 
@@ -33,7 +35,7 @@ export default function AdminRequestsScreen({ navigation }) {
       style={styles.container}
       data={requests || []}
       keyExtractor={i => i.id}
-      contentContainerStyle={styles.list}
+      contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + spacing.md }]}
       ListEmptyComponent={<EmptyState icon={'\u{1F4E8}'} title="No requests" />}
       renderItem={({ item }) => (
         <View style={styles.card}>

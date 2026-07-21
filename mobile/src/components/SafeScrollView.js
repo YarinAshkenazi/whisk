@@ -1,20 +1,33 @@
 import React from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SafeScrollView({ children, style, contentContainerStyle, ...props }) {
   const insets = useSafeAreaInsets();
+  const isIOS = Platform.OS === 'ios';
 
   return (
-    <ScrollView
-      style={style}
-      contentContainerStyle={[
-        contentContainerStyle,
-        { paddingBottom: insets.bottom + 24 },
-      ]}
-      {...props}
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={isIOS ? undefined : 'padding'}
     >
-      {children}
-    </ScrollView>
+      <ScrollView
+        style={style}
+        contentContainerStyle={[
+          contentContainerStyle,
+          { paddingBottom: insets.bottom + 24 },
+        ]}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets={isIOS}
+        {...props}
+      >
+        {children}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+});
